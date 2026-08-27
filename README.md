@@ -71,15 +71,16 @@ bash /tmp/universal-control-helper-install.sh --install-dir "$HOME/Applications"
 
 | Mac | 역할 | 필요한 권한 | 할 일 |
 | --- | --- | --- | --- |
-| 키보드가 연결된 Mac | **키보드 Mac (Source)** | 접근성, 입력 모니터링 | Caps Lock 보정 켜기 |
-| 조작할 다른 Mac | **대상 Mac (Target)** | 없음 | Target 역할 선택 |
+| 키보드가 연결된 Mac | **키보드 Mac (Source)** | 입력 모니터링 | 자동 생성된 코드 확인 |
+| 조작할 다른 Mac | **대상 Mac (Target)** | 없음 | Source의 코드 입력 |
 
 1. 두 Mac을 같은 로컬 네트워크에 연결하고 Universal Control을 활성화합니다.
-2. 두 앱의 **페어링 코드**를 같은 6자리 숫자로 맞춥니다.
-3. Universal Control 포인터가 Target Mac에 있을 때 Source에서 **Caps Lock 보정 켜기**를 선택합니다.
-4. Source Mac으로 돌아오면 보정을 끕니다.
+2. 메뉴 막대의 **설정…** 또는 `Command-,`로 설정창을 엽니다.
+3. 키보드가 연결된 Mac은 Source, 다른 Mac은 Target으로 선택합니다.
+4. Source에 자동 생성된 **페어링 코드**를 Target에 입력합니다.
+5. Source에서 입력 모니터링을 허용합니다.
 
-빠른 토글 단축키는 `Control-Option-Command-U`입니다.
+설정창에서는 역할, 연결 상태, 페어링 코드와 권한 상태를 한 번에 확인할 수 있습니다. `Command-Tab`으로 앱을 선택하거나 `Command-,`를 누르면 설정창으로 돌아옵니다. 입력 모니터링과 접근성 시스템 설정으로 이동하는 버튼도 제공합니다. 접근성 권한은 현재 버전에서 필요하지 않습니다.
 
 ## 어떻게 동작하나요?
 
@@ -92,6 +93,7 @@ Source Mac ── Bonjour / 같은 LAN ──▶ Target Mac
 ```
 
 - Source는 물리 키보드의 Caps Lock 누름만 감지합니다.
+- Source의 원래 Caps Lock 한/영 전환은 차단하지 않고 그대로 유지합니다.
 - Bonjour로 Target을 자동 검색하고, 코드가 일치한 연결만 처리합니다.
 - Target은 현재 입력 소스를 확인한 뒤 macOS API로 ABC와 두벌식을 직접 전환합니다.
 - 일반 키 입력, 입력한 텍스트, 클립보드, 마우스 이벤트는 수집하거나 전송하지 않습니다.
@@ -101,7 +103,7 @@ Source Mac ── Bonjour / 같은 LAN ──▶ Target Mac
 - macOS 13 이상
 - `ABC ↔ 두벌식` 조합
 - 신뢰할 수 있는 동일 로컬 네트워크
-- 보정 모드는 사용자가 직접 켜고 끔
+- Source가 실행 중이면 Caps Lock 전환을 Target에 자동 전달
 
 페어링 코드는 같은 네트워크의 다른 앱을 구분하는 용도이며 네트워크 암호화를 제공하지 않습니다. 공용·비신뢰 네트워크에서는 사용하지 마세요.
 
@@ -109,7 +111,8 @@ Source Mac ── Bonjour / 같은 LAN ──▶ Target Mac
 
 앱은 [Sparkle](https://sparkle-project.org/)로 GitHub Release의 EdDSA 서명 업데이트를 확인합니다. 메뉴 막대에서 **업데이트 확인**..을 선택하거나 기본 주기 확인을 이용할 수 있습니다.
 
-Developer ID가 없는 현재 빌드는 버전 교체 후 Source Mac의 접근성 또는 입력 모니터링 권한을 다시 요청할 수 있습니다.
+Developer ID가 없는 현재 빌드는 버전 교체 후 Source Mac의 입력 모니터링 권한을 다시 요청할 수 있습니다.
+설정에서 허용했는데도 **사용 불가**로 표시되면 앱을 완전히 종료하고 다시 실행한 뒤 **권한 다시 확인**을 눌러 주세요. 앱은 시스템 설정의 스위치 모양이 아니라 현재 프로세스가 실제로 Caps Lock을 감지할 수 있는지를 기준으로 표시합니다.
 
 ## 개발
 

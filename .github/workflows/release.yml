@@ -62,5 +62,5 @@ jobs:
             dist/appcast.xml \
             dist/SHA256SUMS \
             dist/install.sh \
-            --title "Universal Control Helper ${GITHUB_REF_NAME#v}" \
+            --title "$GITHUB_REF_NAME" \
             --notes-file RELEASE_NOTES.md

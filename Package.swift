@@ -29,5 +29,6 @@ let package = Package(
             ]
         ),
         .testTarget(name: "UniversalControlCoreTests", dependencies: ["UniversalControlCore"]),
+        .testTarget(name: "UniversalControlHelperTests", dependencies: ["UniversalControlHelper"]),
     ]
 )

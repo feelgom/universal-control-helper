@@ -10,7 +10,6 @@ final class Preferences {
     private enum Key {
         static let role = "computerRole"
         static let pairingCode = "pairingCode"
-        static let relayActive = "relayActive"
     }
 
     private let defaults: UserDefaults
@@ -37,10 +36,5 @@ final class Preferences {
             precondition(PairingCode.isValid(newValue))
             defaults.set(newValue, forKey: Key.pairingCode)
         }
-    }
-
-    var relayActive: Bool {
-        get { defaults.bool(forKey: Key.relayActive) }
-        set { defaults.set(newValue, forKey: Key.relayActive) }
     }
 }

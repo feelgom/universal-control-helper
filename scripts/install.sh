@@ -140,5 +140,5 @@ STAGING_PATH=""
 printf 'Universal Control Helper %s 설치 완료: %s\n' "$VERSION" "$INSTALL_PATH"
 if [[ "$LAUNCH_APP" -eq 1 ]]; then
   open "$INSTALL_PATH"
-  printf '앱을 실행했습니다. Source Mac에서는 접근성과 입력 모니터링 권한을 확인해 주세요.\n'
+  printf '앱을 실행했습니다. Source Mac에서는 설정창에서 입력 모니터링 권한을 확인해 주세요.\n'
 fi

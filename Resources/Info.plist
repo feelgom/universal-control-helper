@@ -15,13 +15,13 @@
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.2.0</string>
+    <string>1.3.0</string>
     <key>CFBundleVersion</key>
-    <string>1.2.0</string>
+    <string>1.3.0</string>
     <key>LSMinimumSystemVersion</key>
     <string>13.0</string>
     <key>LSUIElement</key>
-    <true/>
+    <false/>
     <key>NSLocalNetworkUsageDescription</key>
     <string>Universal Control의 Caps Lock 입력 소스 전환 신호를 사용자의 다른 Mac으로 전달합니다.</string>
     <key>NSBonjourServices</key>

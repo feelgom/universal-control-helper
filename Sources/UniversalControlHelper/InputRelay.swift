@@ -1,24 +1,12 @@
-import AppKit
-import ApplicationServices
 import Carbon
 import IOKit.hid
 import UniversalControlCore
 
 final class InputRelay {
-    var relayActiveDidChange: ((Bool) -> Void)?
     var send: ((RelayMessage) -> Void)?
 
     private let tokenProvider: () -> String
-    private var eventTap: CFMachPort?
-    private var runLoopSource: CFRunLoopSource?
     private var physicalMonitor: PhysicalInputMonitor?
-
-    var isRelayActive = false {
-        didSet {
-            guard oldValue != isRelayActive else { return }
-            relayActiveDidChange?(isRelayActive)
-        }
-    }
 
     init(tokenProvider: @escaping () -> String) {
         self.tokenProvider = tokenProvider
@@ -26,76 +14,25 @@ final class InputRelay {
 
     @discardableResult
     func start() -> Bool {
-        guard eventTap == nil else { return true }
-        _ = IOHIDRequestAccess(kIOHIDRequestTypeListenEvent)
+        guard physicalMonitor == nil else { return true }
+        guard AppPermissions.requestInputMonitoring() else { return false }
+
         let monitor = PhysicalInputMonitor()
         monitor.onCapsLockPressed = { [weak self] in
-            guard let self, self.isRelayActive else { return }
+            guard let self else { return }
             self.send?(.toggleInputSource(token: self.tokenProvider()))
         }
         physicalMonitor = monitor
-        monitor.start()
-
-        let mask = CGEventMask(1 << CGEventType.flagsChanged.rawValue)
-            | CGEventMask(1 << CGEventType.keyDown.rawValue)
-
-        guard let tap = CGEvent.tapCreate(
-            tap: .cgSessionEventTap,
-            place: .headInsertEventTap,
-            options: .defaultTap,
-            eventsOfInterest: mask,
-            callback: { _, type, event, context in
-                guard let context else { return Unmanaged.passUnretained(event) }
-                let relay = Unmanaged<InputRelay>.fromOpaque(context).takeUnretainedValue()
-                return relay.handle(type: type, event: event)
-            },
-            userInfo: Unmanaged.passUnretained(self).toOpaque()
-        ) else {
+        guard monitor.start() else {
+            physicalMonitor = nil
             return false
         }
-
-        eventTap = tap
-        let source = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, tap, 0)
-        runLoopSource = source
-        CFRunLoopAddSource(CFRunLoopGetMain(), source, .commonModes)
-        CGEvent.tapEnable(tap: tap, enable: true)
         return true
     }
 
     func stop() {
-        if let runLoopSource {
-            CFRunLoopRemoveSource(CFRunLoopGetMain(), runLoopSource, .commonModes)
-        }
-        if let eventTap {
-            CFMachPortInvalidate(eventTap)
-        }
-        runLoopSource = nil
-        eventTap = nil
         physicalMonitor?.stop()
         physicalMonitor = nil
-    }
-
-    private func handle(type: CGEventType, event: CGEvent) -> Unmanaged<CGEvent>? {
-        if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
-            if let eventTap { CGEvent.tapEnable(tap: eventTap, enable: true) }
-            return Unmanaged.passUnretained(event)
-        }
-
-        if type == .keyDown,
-           event.getIntegerValueField(.keyboardEventKeycode) == 32,
-           event.flags.intersection([.maskCommand, .maskAlternate, .maskControl]) == [.maskCommand, .maskAlternate, .maskControl] {
-            DispatchQueue.main.async { [weak self] in
-                guard let self else { return }
-                self.isRelayActive.toggle()
-            }
-            return nil
-        }
-
-        if type == .flagsChanged, event.getIntegerValueField(.keyboardEventKeycode) == 57 {
-            return isRelayActive ? nil : Unmanaged.passUnretained(event)
-        }
-
-        return Unmanaged.passUnretained(event)
     }
 }
 
@@ -104,8 +41,8 @@ final class PhysicalInputMonitor {
 
     private var manager: IOHIDManager?
 
-    func start() {
-        guard manager == nil else { return }
+    func start() -> Bool {
+        guard manager == nil else { return true }
         let manager = IOHIDManagerCreate(kCFAllocatorDefault, IOOptionBits(kIOHIDOptionsTypeNone))
         self.manager = manager
 
@@ -126,7 +63,17 @@ final class PhysicalInputMonitor {
             Unmanaged.passUnretained(self).toOpaque()
         )
         IOHIDManagerScheduleWithRunLoop(manager, CFRunLoopGetMain(), CFRunLoopMode.commonModes.rawValue)
-        IOHIDManagerOpen(manager, IOOptionBits(kIOHIDOptionsTypeNone))
+        let result = IOHIDManagerOpen(manager, IOOptionBits(kIOHIDOptionsTypeNone))
+        guard result == kIOReturnSuccess else {
+            IOHIDManagerUnscheduleFromRunLoop(
+                manager,
+                CFRunLoopGetMain(),
+                CFRunLoopMode.commonModes.rawValue
+            )
+            self.manager = nil
+            return false
+        }
+        return true
     }
 
     func stop() {
@@ -204,9 +151,4 @@ enum InputSourceSwitcher {
         guard let pointer = TISGetInputSourceProperty(source, key) else { return "" }
         return Unmanaged<CFString>.fromOpaque(pointer).takeUnretainedValue() as String
     }
-}
-
-func requestAccessibilityPermission() -> Bool {
-    let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
-    return AXIsProcessTrustedWithOptions(options)
 }
