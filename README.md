@@ -28,7 +28,7 @@
 
 ---
 
-macOS Universal Control로 다른 Mac을 조작할 때 Caps Lock을 눌러도 한/영 전환이 되지 않는 경우가 있습니다. Universal Control Helper는 **물리 키보드의 Caps Lock 누름만** Source Mac에서 감지하고, 로컬 네트워크를 통해 Target Mac의 `ABC ↔ 두벌식` 입력 소스를 전환합니다.
+macOS Universal Control로 다른 Mac을 조작할 때 Caps Lock을 눌러도 한/영 전환이 되지 않는 경우가 있습니다. Universal Control Helper는 Source Mac의 `ABC ↔ 두벌식` 변경을 감지하고, Target Mac의 입력 소스를 같은 상태로 맞춥니다. 키보드 이벤트를 직접 읽지 않으므로 입력 모니터링 권한이 필요하지 않습니다.
 
 > Apple과 제휴하거나 Apple이 보증한 제품이 아닌 비공식 오픈 소스 유틸리티입니다.
 
@@ -63,7 +63,7 @@ bash /tmp/universal-control-helper-install.sh --install-dir "$HOME/Applications"
 [최신 Release](https://github.com/feelgom/universal-control-helper/releases/latest)에서 `UniversalControlHelper-macOS-universal.zip`을 받아 압축을 풀고 `Universal Control Helper.app`을 `/Applications`로 옮깁니다.
 
 > [!IMPORTANT]
-> 현재 공개된 v1.4.1까지는 Apple Developer ID 서명·공증 없이 배포되었습니다. Developer ID 자동 서명·공증 파이프라인은 준비되었으며, 자격 증명이 등록된 다음 릴리즈부터 Gatekeeper가 검증한 앱을 배포합니다.
+> Apple Developer ID가 설정되지 않은 공개 빌드는 임시 서명으로 배포되므로 첫 실행 시 Finder에서 앱을 Control-클릭한 뒤 **열기**를 선택해야 할 수 있습니다. Developer ID 자격 증명이 등록되면 같은 파이프라인이 자동으로 서명·공증된 앱을 배포합니다.
 
 ## 사용법
 
@@ -71,31 +71,31 @@ bash /tmp/universal-control-helper-install.sh --install-dir "$HOME/Applications"
 
 | Mac | 역할 | 필요한 권한 | 할 일 |
 | --- | --- | --- | --- |
-| 키보드가 연결된 Mac | **키보드 Mac (Source)** | 입력 모니터링, 로컬 네트워크 | 자동 생성된 코드 확인 |
+| 키보드가 연결된 Mac | **키보드 Mac (Source)** | 로컬 네트워크 | 자동 생성된 코드 확인 |
 | 조작할 다른 Mac | **대상 Mac (Target)** | 로컬 네트워크 | Source의 코드 입력 |
 
 1. 두 Mac을 같은 로컬 네트워크에 연결하고 Universal Control을 활성화합니다.
 2. 메뉴 막대의 **설정…** 또는 `Command-,`로 설정창을 엽니다.
 3. 키보드가 연결된 Mac은 Source, 다른 Mac은 Target으로 선택합니다.
 4. Source에 자동 생성된 **페어링 코드**를 Target에 입력합니다.
-5. 두 Mac에서 로컬 네트워크를 허용하고, Source에서만 입력 모니터링을 허용합니다.
+5. 첫 연결 때 두 Mac에 나타나는 로컬 네트워크 요청을 허용합니다.
 
-설정창은 일반, 연결, 입력 권한, 소프트웨어 업데이트 순서로 구성됩니다. 창이 열려 있을 때 `Command-W`를 누르면 메뉴 막대 앱은 계속 실행되지만 `Command-Tab` 목록에서는 숨겨집니다. 다시 열 때는 메뉴 막대의 **설정…**을 사용합니다. 로컬 네트워크 권한은 첫 연결 때 macOS가 자동으로 요청하므로 별도의 설정 항목으로 표시하지 않습니다. 접근성 권한은 필요하지 않습니다.
+설정창은 일반, 연결, 소프트웨어 업데이트 순서로 구성됩니다. 창이 열려 있을 때 `Command-W`를 누르면 메뉴 막대 앱은 계속 실행되지만 `Command-Tab` 목록에서는 숨겨집니다. 다시 열 때는 메뉴 막대의 **설정…**을 사용합니다. 로컬 네트워크 권한은 첫 연결 때 macOS가 자동으로 요청하므로 별도의 설정 항목으로 표시하지 않습니다. 입력 모니터링과 접근성 권한은 필요하지 않습니다.
 
-메뉴 막대 메뉴에는 상태와 전체 기능 스위치, 설정, 종료만 표시합니다. 역할, 페어링 코드, 권한과 업데이트는 설정창에서 관리합니다. 상단 스위치나 설정창의 **Universal Control Helper 사용**을 끄면 Caps Lock 감지와 두 Mac 간 연결이 함께 일시 중지됩니다. **Mac에 로그인할 때 자동으로 실행**을 켜면 별도 헬퍼 없이 macOS 로그인 항목으로 등록됩니다.
+메뉴 막대 메뉴에는 전체 기능 스위치, 설정, 종료만 표시합니다. 역할, 페어링 코드, 연결과 업데이트는 설정창에서 관리합니다. 상단 스위치나 설정창의 **Universal Control Helper 사용**을 끄면 입력 소스 동기화와 두 Mac 간 연결이 함께 일시 중지됩니다. **Mac에 로그인할 때 자동으로 실행**을 켜면 별도 헬퍼 없이 macOS 로그인 항목으로 등록됩니다.
 
 ## 어떻게 동작하나요?
 
 ```text
-물리 Caps Lock
-      │
-      ▼
+Source Mac의 ABC/두벌식 변경
+             │
+             ▼
 Source Mac ── Bonjour / 같은 LAN ──▶ Target Mac
-  입력 감지       6자리 코드 확인       ABC ↔ 두벌식
+ 상태 확인        6자리 코드 확인        같은 상태 적용
 ```
 
-- Source는 물리 키보드의 Caps Lock 누름만 감지합니다.
-- Source의 원래 Caps Lock 한/영 전환은 차단하지 않고 그대로 유지합니다.
+- Source는 키보드 이벤트 대신 macOS가 제공하는 입력 소스 변경 알림만 관찰합니다.
+- Caps Lock, 입력 메뉴 또는 다른 단축키로 바꾼 ABC/두벌식 상태가 모두 동기화됩니다.
 - Bonjour로 Target을 자동 검색하고, 코드가 일치한 연결만 처리합니다.
 - Target은 현재 입력 소스를 확인한 뒤 macOS API로 ABC와 두벌식을 직접 전환합니다.
 - 일반 키 입력, 입력한 텍스트, 클립보드, 마우스 이벤트는 수집하거나 전송하지 않습니다.
@@ -105,17 +105,15 @@ Source Mac ── Bonjour / 같은 LAN ──▶ Target Mac
 - macOS 13 이상
 - `ABC ↔ 두벌식` 조합
 - 신뢰할 수 있는 동일 로컬 네트워크
-- Source가 실행 중이면 Caps Lock 전환을 Target에 자동 전달
+- Source가 실행 중이면 ABC/두벌식 상태 변경을 Target에 자동 전달
 
 페어링 코드는 같은 네트워크의 다른 앱을 구분하는 용도이며 네트워크 암호화를 제공하지 않습니다. 공용·비신뢰 네트워크에서는 사용하지 마세요.
 
 ## 업데이트
 
-앱은 [Sparkle](https://sparkle-project.org/)로 GitHub Release의 EdDSA 서명 업데이트를 확인합니다. 메뉴 막대나 설정창의 **업데이트 확인…**을 선택하거나 기본 주기 확인을 이용할 수 있습니다. 설정창의 일반 섹션에서 현재 설치된 버전도 확인할 수 있습니다.
+앱은 [Sparkle](https://sparkle-project.org/)로 GitHub Release의 EdDSA 서명 업데이트를 확인합니다. 설정창의 **소프트웨어 업데이트** 섹션에서 현재 버전을 보거나 **업데이트 확인…**을 선택할 수 있으며, 기본 주기 확인도 지원합니다.
 
-Developer ID 이전 빌드에서 최초 서명 버전으로 업데이트할 때는 macOS가 새 서명 주체로 인식해 Source Mac의 입력 모니터링 권한을 한 번 다시 요청할 수 있습니다. 그 이후에는 동일한 Developer ID, Team ID와 Bundle ID를 유지하므로 일반 업데이트에서 권한이 유지됩니다. 시스템 설정의 스위치가 켜져 있는데 **현재 앱에는 미허용**으로 표시되면 **권한 초기화…**로 이 앱의 오래된 항목만 정리한 뒤 현재 앱을 다시 허용하세요. **권한 다시 확인**은 실제 HID 모니터를 다시 열고, macOS가 재실행을 요구하는 경우 앱을 자동으로 다시 시작합니다.
-
-권한 확인은 `IOHIDCheckAccess`, Core Graphics 사전 확인과 실제 HID 모니터 시작 결과를 함께 사용합니다. 설정 목록의 모양이 아니라 현재 실행 중인 앱이 실제로 Caps Lock을 감지할 수 있는지를 기준으로 표시합니다.
+v1.5.0부터 입력 모니터링 권한을 사용하지 않으므로 앱 업데이트 후 해당 권한을 다시 허용할 필요가 없습니다. 임시 서명 빌드에서는 Gatekeeper 안내나 로컬 네트워크 요청이 다시 나타날 가능성을 완전히 배제할 수 없으며, Developer ID를 도입하면 이 앱의 서명 신원도 업데이트 간에 유지됩니다.
 
 ## 개발
 
@@ -125,7 +123,7 @@ BUILD_UNIVERSAL=1 ./scripts/build-app.sh
 REQUIRE_UNIVERSAL=1 ./scripts/verify-release.sh
 ```
 
-`v*` 태그를 푸시하면 GitHub Actions가 테스트, Universal Binary 빌드, Developer ID 서명, Apple 공증, Sparkle 서명, 앱캐스트 생성과 Release 업로드를 수행합니다. 자격 증명과 사전 검사 절차는 [RELEASING.md](RELEASING.md)를 참고하세요.
+`v*` 태그를 푸시하면 GitHub Actions가 테스트, Universal Binary 빌드, Sparkle 서명, 앱캐스트 생성과 Release 업로드를 수행합니다. Apple 자격 증명이 있으면 Developer ID 서명과 공증도 자동으로 추가됩니다. 자세한 절차는 [RELEASING.md](RELEASING.md)를 참고하세요.
 
 ## Star History
 

@@ -7,11 +7,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem!
     private var transport: RelayTransport?
     private var sourceClient: SourceClient?
-    private var inputRelay: InputRelay?
+    private var inputSourceRelay: InputSourceRelay?
     private var settingsController: SettingsWindowController?
     private var updaterReadinessObservation: NSKeyValueObservation?
     private var connectionStatus = "시작 중"
-    private var inputMonitoringReady = false
     private lazy var updaterController = SPUStandardUpdaterController(
         startingUpdater: true,
         updaterDelegate: nil,
@@ -54,13 +53,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         transport?.stop()
         transport = nil
         sourceClient = nil
-        inputRelay?.stop()
-        inputRelay = nil
-        inputMonitoringReady = preferences.role == .target
+        inputSourceRelay?.stop()
+        inputSourceRelay = nil
 
         guard preferences.helperEnabled else {
             connectionStatus = "꺼짐"
-            inputMonitoringReady = false
             refreshInterface()
             return
         }
@@ -68,17 +65,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         switch preferences.role {
         case .source:
             let client = SourceClient { [weak self] in self?.preferences.pairingCode ?? "" }
-            let relay = InputRelay { [weak self] in self?.preferences.pairingCode ?? "" }
-            relay.send = { [weak client] message in client?.send(message) }
+            let relay = InputSourceRelay()
+            relay.send = { [weak client] state in client?.synchronizeInputSource(state) }
+            client.authenticationDidComplete = { [weak relay] peerProtocolVersion in
+                if peerProtocolVersion >= RelayProtocol.currentVersion {
+                    relay?.synchronizeCurrentState()
+                }
+            }
             client.statusDidChange = { [weak self] status in
                 self?.connectionStatus = status
                 self?.refreshInterface()
             }
             sourceClient = client
-            inputRelay = relay
+            inputSourceRelay = relay
             transport = client
             client.start()
-            inputMonitoringReady = relay.start()
+            relay.start()
 
         case .target:
             let server = TargetServer { [weak self] in self?.preferences.pairingCode ?? "" }
@@ -94,22 +96,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         refreshInterface()
     }
 
-    private var displayedConnectionStatus: String {
-        if !preferences.helperEnabled {
-            return "꺼짐"
-        }
-        if preferences.role == .source, !inputMonitoringReady {
-            return "입력 모니터링 권한 필요"
-        }
-        return connectionStatus
-    }
-
     private var settingsSnapshot: SettingsSnapshot {
         SettingsSnapshot(
             role: preferences.role,
             pairingCode: preferences.pairingCode,
-            connectionStatus: displayedConnectionStatus,
-            inputMonitoringReady: inputMonitoringReady,
+            connectionStatus: preferences.helperEnabled ? connectionStatus : "꺼짐",
             helperEnabled: preferences.helperEnabled,
             currentVersion: displayedVersion,
             canCheckForUpdates: updaterController.updater.canCheckForUpdates,
@@ -128,7 +119,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func refreshInterface() {
         rebuildMenu()
         settingsController?.update(snapshot: settingsSnapshot)
-        settingsController?.refreshPermissionStatus()
     }
 
     private func configureMainMenu() {
@@ -227,19 +217,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         return code
     }
 
-    private func refreshInputMonitoring() -> Bool {
-        guard preferences.role == .source, let inputRelay else {
-            inputMonitoringReady = preferences.role == .target
-            refreshInterface()
-            return inputMonitoringReady
-        }
-
-        inputRelay.stop()
-        inputMonitoringReady = inputRelay.start()
-        refreshInterface()
-        return inputMonitoringReady
-    }
-
     private func makeSettingsController() -> SettingsWindowController {
         let controller = SettingsWindowController()
         controller.roleDidChange = { [weak self] role in self?.setRole(role) }
@@ -249,15 +226,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         controller.pairingCodeRegenerationRequested = { [weak self] in
             self?.regeneratePairingCode() ?? ""
         }
-        controller.permissionRefreshRequested = { [weak self] in
-            guard let self else { return false }
-            let ready = self.refreshInputMonitoring()
-            if !ready {
-                DispatchQueue.main.async { [weak self] in self?.restartApplication() }
-            }
-            return ready
-        }
-        controller.permissionResetRequested = { [weak self] in self?.resetInputMonitoring() }
         controller.helperEnabledDidChange = { [weak self] enabled in
             self?.setHelperEnabled(enabled)
         }
@@ -271,50 +239,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             NSApp.setActivationPolicy(.accessory)
         }
         return controller
-    }
-
-    private func resetInputMonitoring() {
-        let alert = NSAlert()
-        alert.messageText = "입력 모니터링 권한을 초기화할까요?"
-        alert.informativeText = "Universal Control Helper의 오래된 권한 항목만 제거합니다. 다른 앱의 권한은 변경하지 않습니다. 이후 시스템 설정에서 현재 앱을 다시 허용해 주세요."
-        alert.addButton(withTitle: "초기화하고 설정 열기")
-        alert.addButton(withTitle: "취소")
-        guard alert.runModal() == .alertFirstButtonReturn else { return }
-
-        inputRelay?.stop()
-        inputMonitoringReady = false
-        guard AppPermissions.resetInputMonitoring() else {
-            showInfo(
-                title: "권한 초기화 실패",
-                message: "터미널에서 다음 명령을 실행해 주세요.\n\ntccutil reset ListenEvent io.yoonsungji.UniInputFix"
-            )
-            return
-        }
-
-        connectionStatus = "입력 모니터링을 다시 허용해 주세요"
-        refreshInterface()
-        AppPermissions.openInputMonitoringSettings()
-    }
-
-    private func restartApplication() {
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/bin/zsh")
-        process.arguments = [
-            "-c",
-            "sleep 0.5; /usr/bin/open -n \"$1\"",
-            "UniversalControlHelperRestart",
-            Bundle.main.bundlePath,
-        ]
-
-        do {
-            try process.run()
-            NSApp.terminate(nil)
-        } catch {
-            showInfo(
-                title: "앱 재실행 실패",
-                message: "Universal Control Helper를 직접 종료한 뒤 다시 실행해 주세요."
-            )
-        }
     }
 
     @objc private func showSettings() {
@@ -333,21 +257,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         updaterController.checkForUpdates(nil)
     }
 
-    private func showInfo(title: String, message: String) {
-        NSApp.activate(ignoringOtherApps: true)
-        let alert = NSAlert()
-        alert.messageText = title
-        alert.informativeText = message
-        alert.addButton(withTitle: "확인")
-        alert.runModal()
-    }
-
-    func applicationDidBecomeActive(_ notification: Notification) {
-        if statusItem != nil {
-            _ = refreshInputMonitoring()
-        }
-    }
-
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         showSettings()
         return true
@@ -358,7 +267,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
-        inputRelay?.stop()
+        inputSourceRelay?.stop()
         transport?.stop()
     }
 }

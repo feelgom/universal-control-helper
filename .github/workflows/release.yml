@@ -37,13 +37,30 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
           test -n "$SPARKLE_PRIVATE_KEY"
-          test -n "$APPLE_CERTIFICATE_P12"
-          test -n "$APPLE_CERTIFICATE_PASSWORD"
-          test -n "$APPLE_ID"
-          test -n "$APPLE_APP_SPECIFIC_PASSWORD"
-          test -n "$APPLE_TEAM_ID"
+
+          SIGNING_SECRET_COUNT=0
+          for value in \
+            "$APPLE_CERTIFICATE_P12" \
+            "$APPLE_CERTIFICATE_PASSWORD" \
+            "$APPLE_ID" \
+            "$APPLE_APP_SPECIFIC_PASSWORD" \
+            "$APPLE_TEAM_ID"; do
+            if [[ -n "$value" ]]; then
+              SIGNING_SECRET_COUNT=$((SIGNING_SECRET_COUNT + 1))
+            fi
+          done
+          if [[ "$SIGNING_SECRET_COUNT" == "0" ]]; then
+            echo "developer_id_enabled=false" >> "$GITHUB_OUTPUT"
+            echo "Developer ID secrets are absent; creating an ad-hoc signed release."
+          elif [[ "$SIGNING_SECRET_COUNT" == "5" ]]; then
+            echo "developer_id_enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Developer ID configuration is incomplete." >&2
+            exit 1
+          fi
 
       - name: Import Developer ID certificate
+        if: steps.release.outputs.developer_id_enabled == 'true'
         run: |
           CERTIFICATE_PATH="$RUNNER_TEMP/developer-id.p12"
           KEYCHAIN_PATH="$RUNNER_TEMP/app-signing.keychain-db"
@@ -79,9 +96,14 @@ jobs:
         run: |
           VERSION="${{ steps.release.outputs.version }}"
           APP_VERSION="$VERSION" BUILD_NUMBER="$VERSION" BUILD_UNIVERSAL=1 ./scripts/build-app.sh
-          REQUIRE_UNIVERSAL=1 REQUIRE_DEVELOPER_ID=1 ./scripts/verify-release.sh
+          if [[ "${{ steps.release.outputs.developer_id_enabled }}" == "true" ]]; then
+            REQUIRE_UNIVERSAL=1 REQUIRE_DEVELOPER_ID=1 ./scripts/verify-release.sh
+          else
+            REQUIRE_UNIVERSAL=1 ./scripts/verify-release.sh
+          fi
 
       - name: Notarize and staple app
+        if: steps.release.outputs.developer_id_enabled == 'true'
         run: |
           ./scripts/notarize-app.sh
           REQUIRE_UNIVERSAL=1 REQUIRE_DEVELOPER_ID=1 REQUIRE_NOTARIZED=1 \
@@ -109,11 +131,11 @@ jobs:
           grep -q 'sparkle:edSignature=' dist/appcast.xml
           grep -q "${{ steps.release.outputs.version }}" dist/appcast.xml
 
-      - name: Upload signed build test artifact
+      - name: Upload release candidate artifact
         if: github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@v6
         with:
-          name: UniversalControlHelper-${{ steps.release.outputs.version }}-notarized
+          name: UniversalControlHelper-${{ steps.release.outputs.version }}-release-candidate
           path: |
             dist/UniversalControlHelper-macOS-universal.zip
             dist/appcast.xml

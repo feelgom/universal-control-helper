@@ -5,26 +5,60 @@ public struct RelayMessage: Codable, Equatable, Sendable {
         case hello
         case helloAck
         case toggleInputSource
+        case setInputSource
     }
 
     public let kind: Kind
     public let token: String
+    public let inputSource: InputSourceState?
+    public let protocolVersion: Int?
 
-    public init(kind: Kind, token: String) {
+    public init(
+        kind: Kind,
+        token: String,
+        inputSource: InputSourceState? = nil,
+        protocolVersion: Int? = nil
+    ) {
         self.kind = kind
         self.token = token
+        self.inputSource = inputSource
+        self.protocolVersion = protocolVersion
     }
 
     public static func hello(token: String) -> RelayMessage {
-        RelayMessage(kind: .hello, token: token)
+        RelayMessage(kind: .hello, token: token, protocolVersion: RelayProtocol.currentVersion)
     }
 
     public static func helloAck(token: String) -> RelayMessage {
-        RelayMessage(kind: .helloAck, token: token)
+        RelayMessage(kind: .helloAck, token: token, protocolVersion: RelayProtocol.currentVersion)
     }
 
     public static func toggleInputSource(token: String) -> RelayMessage {
         RelayMessage(kind: .toggleInputSource, token: token)
+    }
+
+    public static func setInputSource(_ inputSource: InputSourceState, token: String) -> RelayMessage {
+        RelayMessage(
+            kind: .setInputSource,
+            token: token,
+            inputSource: inputSource,
+            protocolVersion: RelayProtocol.currentVersion
+        )
+    }
+}
+
+public enum RelayProtocol {
+    public static let currentVersion = 2
+
+    public static func inputSourceMessage(
+        _ inputSource: InputSourceState,
+        token: String,
+        peerProtocolVersion: Int
+    ) -> RelayMessage {
+        if peerProtocolVersion >= 2 {
+            return .setInputSource(inputSource, token: token)
+        }
+        return .toggleInputSource(token: token)
     }
 }
 

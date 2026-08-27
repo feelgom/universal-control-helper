@@ -53,26 +53,6 @@ final class SettingsViewModelTests: XCTestCase {
         )
     }
 
-    func testPermissionRefreshUsesRuntimeMonitorResult() {
-        let model = SettingsViewModel()
-        model.update(snapshot: snapshot(pairingCode: "123456"))
-        model.permissionRefreshRequested = { true }
-
-        model.refreshPermissions(recheckRuntime: true)
-
-        XCTAssertTrue(model.inputMonitoringReady)
-    }
-
-    func testPermissionResetInvokesRecoveryCallback() {
-        let model = SettingsViewModel()
-        var resetRequested = false
-        model.permissionResetRequested = { resetRequested = true }
-
-        model.resetInputMonitoring()
-
-        XCTAssertTrue(resetRequested)
-    }
-
     func testUpdateCheckInvokesCallback() {
         let model = SettingsViewModel()
         var updateCheckRequested = false
@@ -116,9 +96,8 @@ final class SettingsViewModelTests: XCTestCase {
             role: .source,
             pairingCode: pairingCode,
             connectionStatus: status,
-            inputMonitoringReady: false,
             helperEnabled: true,
-            currentVersion: "1.4.0",
+            currentVersion: "1.5.0",
             canCheckForUpdates: true,
             launchAtLoginState: .disabled
         )

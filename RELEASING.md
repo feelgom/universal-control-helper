@@ -2,7 +2,7 @@
 
 ## 최초 설정
 
-공개 릴리즈는 항상 같은 **Developer ID Application** 인증서로 서명하고 Apple 공증을 통과해야 합니다. Apple Developer Program 가입 후 다음 값을 GitHub의 `release` Environment secret으로 등록합니다.
+Sparkle 업데이트 서명에 사용하는 `SPARKLE_PRIVATE_KEY`는 필수입니다. Apple Developer Program 가입 전에는 앱을 임시 서명으로 배포할 수 있습니다. Developer ID 서명·공증을 활성화하려면 다음 Apple 값을 GitHub의 `release` Environment secret으로 모두 등록합니다.
 
 | Secret | 내용 |
 | --- | --- |
@@ -27,9 +27,9 @@
    gh secret set SPARKLE_PRIVATE_KEY --env release
    ```
 
-인증서나 공증 값이 하나라도 없으면 Release workflow는 배포 전에 실패합니다. 인증서는 작업 중 생성한 임시 키체인에만 가져오며 작업 종료 시 삭제합니다.
+Apple 관련 secret이 모두 비어 있으면 Release workflow는 임시 서명 빌드를 정상 배포합니다. 일부만 등록된 불완전한 상태에서는 잘못된 릴리즈를 막기 위해 실패합니다. 모든 값이 있으면 인증서를 작업 중 생성한 임시 키체인에만 가져오고, Developer ID 서명·공증 후 키체인을 삭제합니다.
 
-현재 Bundle ID인 `io.yoonsungji.UniInputFix`는 macOS 개인정보 보호 권한의 앱 식별에 사용되므로 변경하지 않습니다. 최초 Developer ID 서명 버전으로 전환할 때 Source Mac에서 입력 모니터링을 한 번 다시 허용해야 할 수 있지만, 이후 같은 Team ID·인증서·Bundle ID로 서명한 업데이트에서는 권한이 유지됩니다.
+현재 Bundle ID인 `io.yoonsungji.UniInputFix`는 앱과 업데이트의 신원에 사용되므로 변경하지 않습니다. v1.5.0부터 입력 모니터링 권한은 사용하지 않습니다.
 
 ### 서명·공증 사전 검사
 
@@ -39,7 +39,7 @@
 gh workflow run release.yml --ref main
 ```
 
-수동 실행은 다음 과정을 실제로 수행하지만 GitHub Release는 만들지 않습니다.
+수동 실행은 릴리즈 빌드와 Sparkle 서명을 실제로 수행하지만 GitHub Release는 만들지 않습니다. Apple secret이 모두 있을 때만 다음 과정도 추가합니다.
 
 - Developer ID 인증서 가져오기
 - Hardened Runtime을 적용한 Universal Binary 및 Sparkle 구성요소 서명
@@ -62,7 +62,7 @@ gh workflow run release.yml --ref main
 4. 버전 커밋에 태그를 만들고 푸시합니다.
 
    ```sh
-   git tag v1.4.1
+   git tag v1.5.0
    git push origin main --tags
    ```
 
@@ -70,10 +70,9 @@ gh workflow run release.yml --ref main
 
 - 테스트
 - arm64/x86_64 Universal Binary 빌드
-- Sparkle 내부 구성요소와 앱을 Developer ID로 안쪽부터 서명
-- Hardened Runtime, secure timestamp 적용
-- Apple 공증 완료 및 티켓 staple
-- Developer ID, 공증 및 Gatekeeper 검증
+- Apple secret이 있으면 Sparkle 내부 구성요소와 앱을 Developer ID로 안쪽부터 서명
+- Apple secret이 있으면 Hardened Runtime, secure timestamp, 공증과 Gatekeeper 검증 적용
+- Apple secret이 없으면 임시 서명으로 빌드
 - EdDSA 서명된 `appcast.xml` 생성
 - ZIP, 체크섬, 앱캐스트와 `install.sh`를 GitHub Release에 업로드
 

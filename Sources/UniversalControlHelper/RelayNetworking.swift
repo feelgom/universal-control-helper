@@ -10,6 +10,7 @@ protocol RelayTransport: AnyObject {
 
 final class SourceClient: RelayTransport {
     var statusDidChange: ((String) -> Void)?
+    var authenticationDidComplete: ((Int) -> Void)?
 
     private let queue = DispatchQueue(label: "io.yoonsungji.universalcontrolhelper.source-network")
     private let tokenProvider: () -> String
@@ -17,6 +18,7 @@ final class SourceClient: RelayTransport {
     private var connection: NWConnection?
     private var framer = LineFramer()
     private var authenticated = false
+    private var peerProtocolVersion = 1
     private var availableEndpoints: [NWEndpoint] = []
 
     init(tokenProvider: @escaping () -> String) {
@@ -50,13 +52,19 @@ final class SourceClient: RelayTransport {
         connection?.cancel()
         connection = nil
         authenticated = false
+        peerProtocolVersion = 1
         framer = LineFramer()
         availableEndpoints = []
     }
 
-    func send(_ message: RelayMessage) {
+    func synchronizeInputSource(_ inputSource: InputSourceState) {
         queue.async { [weak self] in
             guard let self, self.authenticated, let connection = self.connection else { return }
+            let message = RelayProtocol.inputSourceMessage(
+                inputSource,
+                token: self.tokenProvider(),
+                peerProtocolVersion: self.peerProtocolVersion
+            )
             self.send(message, over: connection)
         }
     }
@@ -97,7 +105,12 @@ final class SourceClient: RelayTransport {
                         let message = try RelayCodec.decode(frame)
                         if message.kind == .helloAck, message.token == self.tokenProvider() {
                             self.authenticated = true
-                            self.report("연결됨 · 보정 준비 완료")
+                            self.peerProtocolVersion = message.protocolVersion ?? 1
+                            let peerProtocolVersion = self.peerProtocolVersion
+                            self.report("연결됨 · 입력 소스 동기화 중")
+                            DispatchQueue.main.async { [weak self] in
+                                self?.authenticationDidComplete?(peerProtocolVersion)
+                            }
                         }
                     }
                 } catch {
@@ -127,6 +140,7 @@ final class SourceClient: RelayTransport {
         guard connection === candidate else { return }
         connection = nil
         authenticated = false
+        peerProtocolVersion = 1
         framer = LineFramer()
         report("연결 끊김 · 다시 검색 중")
         queue.asyncAfter(deadline: .now() + 1) { [weak self] in
@@ -225,7 +239,7 @@ final class TargetServer: RelayTransport {
                         if message.kind == .hello {
                             self.authenticatedConnections.insert(id)
                             self.send(.helloAck(token: self.tokenProvider()), over: connection)
-                            self.report("연결됨 · 입력 보정 수신 중")
+                            self.report("연결됨 · 입력 소스 동기화 중")
                         } else {
                             guard self.authenticatedConnections.contains(id) else {
                                 self.report("인증되지 않은 입력 데이터 차단")

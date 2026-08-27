@@ -17,15 +17,15 @@
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.4.1</string>
+    <string>1.5.0</string>
     <key>CFBundleVersion</key>
-    <string>1.4.1</string>
+    <string>1.5.0</string>
     <key>LSMinimumSystemVersion</key>
     <string>13.0</string>
     <key>LSUIElement</key>
     <false/>
     <key>NSLocalNetworkUsageDescription</key>
-    <string>Universal Control의 Caps Lock 입력 소스 전환 신호를 사용자의 다른 Mac으로 전달합니다.</string>
+    <string>Universal Control에서 두 Mac의 한/영 입력 소스 상태를 동기화합니다.</string>
     <key>NSBonjourServices</key>
     <array>
         <string>_uniinputfix._tcp</string>
