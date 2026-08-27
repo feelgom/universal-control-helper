@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
+<script>if('IntersectionObserver' in window){document.documentElement.classList.add('js-reveal');}</script>
 <title>Universal Control Helper — 두 Mac 사이의 Caps Lock 한/영 전환</title>
 <meta name="description" content="Universal Control로 두 Mac을 오갈 때 끊기던 Caps Lock 한/영 전환을 되살리는 무료 오픈소스 macOS 유틸리티." />
 <meta property="og:title" content="Universal Control Helper" />
@@ -83,7 +84,25 @@
     background:radial-gradient(60% 60% at 30% 20%,rgba(96,165,250,0.16),transparent 70%),
                radial-gradient(50% 50% at 75% 10%,rgba(167,139,250,0.14),transparent 70%);
     pointer-events:none;z-index:-1;
+    animation:heroDrift 16s ease-in-out infinite alternate;
   }
+  @keyframes heroDrift{
+    from{transform:translate3d(0,0,0) scale(1);}
+    to{transform:translate3d(0,22px,0) scale(1.06);}
+  }
+  @keyframes fadeUp{
+    from{opacity:0;transform:translateY(18px);}
+    to{opacity:1;transform:translateY(0);}
+  }
+  .hero .eyebrow,.hero h1,.hero .sub,.hero .cta-row,.hero .hero-art,.hero .badges{
+    animation:fadeUp .8s cubic-bezier(.16,.84,.44,1) both;
+  }
+  .hero .eyebrow{animation-delay:.05s;}
+  .hero h1{animation-delay:.15s;}
+  .hero .sub{animation-delay:.25s;}
+  .hero .cta-row{animation-delay:.35s;}
+  .hero .hero-art{animation-delay:.45s;}
+  .hero .badges{animation-delay:.55s;}
   .eyebrow{
     display:inline-flex;align-items:center;gap:8px;
     font-size:13px;color:var(--text-dim);
@@ -123,10 +142,29 @@
   /* sections */
   section{padding:88px 0;border-top:1px solid var(--border);}
   .kicker{font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--accent-1);margin-bottom:12px;}
-  h2{font-size:clamp(24px,3.2vw,34px);font-weight:800;letter-spacing:-0.02em;margin:0 0 14px;}
+  h2{font-size:clamp(24px,3.2vw,34px);font-weight:800;letter-spacing:-0.02em;margin:0 0 14px;text-wrap:balance;}
   .lede{color:var(--text-dim);font-size:16px;max-width:640px;margin:0 0 44px;}
   .lede.center{margin-left:auto;margin-right:auto;text-align:center;}
   .center-head{text-align:center;}
+
+  /* scroll-reveal (progressive enhancement, see head script) */
+  .js-reveal .reveal{
+    opacity:0;transform:translateY(22px);
+    transition:opacity .7s cubic-bezier(.16,.84,.44,1),transform .7s cubic-bezier(.16,.84,.44,1);
+    transition-delay:calc(var(--d,0) * 80ms);
+  }
+  .js-reveal .reveal.is-visible{opacity:1;transform:translateY(0);}
+  @media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important;scroll-behavior:auto !important;}
+  }
+
+  /* hover lift for cards */
+  .step,.privacy-card,.trust-card,.flow-card,.compare > div{
+    transition:transform .28s cubic-bezier(.16,.84,.44,1),border-color .28s ease,background-color .28s ease;
+  }
+  .step:hover,.privacy-card:hover,.trust-card:hover,.flow-card:hover{
+    transform:translateY(-4px);border-color:var(--border-strong);
+  }
 
   /* problem steps */
   .steps{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:48px;}
@@ -168,12 +206,19 @@
   .flow-card .big{font-size:20px;font-weight:700;margin-bottom:6px;}
   .flow-card .cap{font-size:13px;color:var(--text-dim);}
   .flow-arrow{display:flex;flex-direction:column;align-items:center;gap:6px;color:var(--text-faint);font-size:12px;}
-  .flow-arrow .line{width:64px;height:2px;background:var(--accent-grad);border-radius:2px;}
+  .flow-arrow .line{
+    width:64px;height:3px;border-radius:2px;
+    background-image:repeating-linear-gradient(90deg,var(--accent-1) 0 8px,var(--accent-2) 8px 16px,transparent 16px 20px);
+    background-size:20px 100%;
+    animation:flowMove 1s linear infinite;
+  }
+  @keyframes flowMove{ to{ background-position:-20px 0; } }
   @media (max-width:720px){
     .flow{grid-template-columns:1fr;}
     .flow-arrow{flex-direction:row;justify-content:center;}
-    .flow-arrow .line{width:2px;height:36px;}
+    .flow-arrow .line{width:3px;height:36px;background-image:repeating-linear-gradient(180deg,var(--accent-1) 0 8px,var(--accent-2) 8px 16px,transparent 16px 20px);background-size:100% 20px;animation-name:flowMoveV;}
   }
+  @keyframes flowMoveV{ to{ background-position:0 -20px; } }
 
   .privacy-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
   .privacy-card{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:22px;}
@@ -211,9 +256,10 @@
   .side-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;}
   .side-card h4{margin:0 0 10px;font-size:15px;}
   .side-card p{margin:0 0 16px;font-size:13.5px;color:var(--text-dim);}
-  .req-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px;font-size:13.5px;}
-  .req-list li{display:flex;justify-content:space-between;border-bottom:1px dashed var(--border);padding-bottom:10px;color:var(--text-dim);}
-  .req-list li span:last-child{color:var(--text);font-weight:600;}
+  .req-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px;}
+  .req-list li{border-bottom:1px dashed var(--border);padding-bottom:12px;}
+  .req-list .req-label{display:block;font-size:12px;color:var(--text-faint);margin-bottom:4px;}
+  .req-list .req-value{display:block;font-size:14px;color:var(--text);font-weight:600;}
 
   /* trust */
   .trust-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
@@ -245,9 +291,9 @@
       <span class="brand-short">UC Helper</span>
     </a>
     <nav class="links">
+      <a href="#install">설치</a>
       <a href="#problem">왜 필요한가요</a>
       <a href="#how">작동 방식</a>
-      <a href="#install">설치</a>
       <a href="#trust">오픈소스 &amp; 보안</a>
     </nav>
     <a class="nav-cta" href="https://github.com/feelgom/universal-control-helper/releases/latest">다운로드</a>
@@ -281,21 +327,56 @@
     </div>
   </section>
 
+  <section id="install">
+    <div class="wrap">
+      <div class="kicker reveal" style="--d:0;">빠른 시작</div>
+      <h2 class="reveal" style="--d:1;">설치는 명령어 한 줄이면 충분합니다</h2>
+      <p class="lede reveal" style="--d:2;">최신 Release를 내려받아 SHA-256 체크섬과 앱 서명을 확인한 뒤 /Applications에 설치합니다.</p>
+
+      <div class="install-grid">
+        <div class="reveal" style="--d:0;">
+          <div class="code-block">
+            <button class="copy-btn" data-copy="curl -fsSL https://github.com/feelgom/universal-control-helper/releases/latest/download/install.sh | bash">복사</button>
+            <code>curl -fsSL https://github.com/feelgom/universal-control-helper/releases/latest/download/install.sh | bash</code>
+          </div>
+          <p class="install-note">
+            실행 전 스크립트 내용을 확인하려면 <code>curl ... -o install.sh</code>로 내려받아 검토한 뒤 실행하세요.
+            자동 실행 없이 설치하려면 <code>--no-launch</code>, 다른 폴더에 설치하려면 <code>--install-dir</code> 옵션을 사용할 수 있습니다.
+          </p>
+          <p class="install-note">
+            스크립트 대신 직접 설치하려면 <a href="https://github.com/feelgom/universal-control-helper/releases/latest" style="color:var(--accent-1);">최신 Release</a>에서
+            <code>UniversalControlHelper-macOS-universal.zip</code>을 내려받아 압축을 풀고 앱을 <code>/Applications</code>로 옮기면 됩니다.
+          </p>
+        </div>
+        <div class="side-card reveal" style="--d:1;">
+          <h4>설치 전 확인할 것</h4>
+          <ul class="req-list">
+            <li><span class="req-label">운영체제</span><span class="req-value">macOS 13 이상</span></li>
+            <li><span class="req-label">입력 조합</span><span class="req-value">ABC ↔ 두벌식</span></li>
+            <li><span class="req-label">네트워크</span><span class="req-value">두 Mac이 같은 신뢰된 LAN</span></li>
+            <li><span class="req-label">Universal Control</span><span class="req-value">두 Mac 모두 활성화</span></li>
+            <li><span class="req-label">라이선스</span><span class="req-value">MIT · 무료</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <section id="problem">
     <div class="wrap">
-      <div class="kicker">왜 필요한가요</div>
-      <h2>Universal Control은 커서를 옮겨주지만,<br />입력 습관까지 옮겨주지는 않습니다</h2>
-      <p class="lede">Apple Universal Control은 키보드와 트랙패드 하나로 Mac 두 대를 오가게 해주지만, 한국어 사용자가 매일 쓰는 <strong>Caps Lock 한/영 전환은 다른 Mac에서 먹통이 되곤 합니다.</strong></p>
+      <div class="kicker reveal" style="--d:0;">왜 필요한가요</div>
+      <h2 class="reveal" style="--d:1;max-width:680px;">Universal Control은 커서를 옮겨주지만, 입력 습관까지 옮겨주지는 않습니다</h2>
+      <p class="lede reveal" style="--d:2;">Apple Universal Control은 키보드와 트랙패드 하나로 Mac 두 대를 오가게 해주지만, 한국어 사용자가 매일 쓰는 <strong>Caps Lock 한/영 전환은 다른 Mac에서 먹통이 되곤 합니다.</strong></p>
 
       <div class="steps">
-        <div class="step"><div class="n">1</div><p>커서를 다른 Mac으로 옮긴 뒤 평소처럼 Caps Lock을 누릅니다</p></div>
-        <div class="step"><div class="n">2</div><p>한/영이 바뀌지 않은 채로 입력이 시작됩니다</p></div>
-        <div class="step"><div class="n">3</div><p>잘못 입력된 글자를 지우고 다시 씁니다</p></div>
-        <div class="step"><div class="n">4</div><p>입력 메뉴나 다른 단축키를 찾아 수동으로 전환합니다</p></div>
+        <div class="step reveal" style="--d:0;"><div class="n">1</div><p>커서를 다른 Mac으로 옮긴 뒤 평소처럼 Caps Lock을 누릅니다</p></div>
+        <div class="step reveal" style="--d:1;"><div class="n">2</div><p>한/영이 바뀌지 않은 채로 입력이 시작됩니다</p></div>
+        <div class="step reveal" style="--d:2;"><div class="n">3</div><p>잘못 입력된 글자를 지우고 다시 씁니다</p></div>
+        <div class="step reveal" style="--d:3;"><div class="n">4</div><p>입력 메뉴나 다른 단축키를 찾아 수동으로 전환합니다</p></div>
       </div>
 
       <div class="compare">
-        <div class="before">
+        <div class="before reveal" style="--d:0;">
           <h3>Universal Control Helper 없이</h3>
           <ul>
             <li><span class="mark">✕</span>다른 Mac에서 Caps Lock을 눌러도 한/영이 바뀌지 않음</li>
@@ -304,7 +385,7 @@
             <li><span class="mark">✕</span>문서·메신저·터미널을 오갈 때마다 같은 흐름 반복</li>
           </ul>
         </div>
-        <div class="after">
+        <div class="after reveal" style="--d:1;">
           <h3>Universal Control Helper 사용 후</h3>
           <ul>
             <li><span class="mark">✓</span>어느 Mac에서든 평소처럼 <strong>Caps Lock 한 번</strong></li>
@@ -319,29 +400,29 @@
 
   <section id="how">
     <div class="wrap center-head">
-      <div class="kicker">작동 방식</div>
-      <h2>물리 Caps Lock을 감지해, 같은 네트워크의 다른 Mac에 전달합니다</h2>
-      <p class="lede center">키보드가 연결된 Mac이 Source, 조작 대상이 Target입니다. 역할과 페어링 코드만 맞추면 나머지는 자동으로 동기화됩니다.</p>
+      <div class="kicker reveal" style="--d:0;">작동 방식</div>
+      <h2 class="reveal" style="--d:1;">물리 Caps Lock을 감지해, 같은 네트워크의 다른 Mac에 전달합니다</h2>
+      <p class="lede center reveal" style="--d:2;">키보드가 연결된 Mac이 Source, 조작 대상이 Target입니다. 역할과 페어링 코드만 맞추면 나머지는 자동으로 동기화됩니다.</p>
 
       <div class="flow">
-        <div class="flow-card">
+        <div class="flow-card reveal" style="--d:0;">
           <div class="tag">Source Mac</div>
           <div class="big">⇪ 물리 Caps Lock 감지</div>
           <div class="cap">키보드가 연결된 Mac · 입력 모니터링 권한 필요</div>
         </div>
-        <div class="flow-arrow">
+        <div class="flow-arrow reveal" style="--d:1;">
           <span>Bonjour</span>
           <div class="line"></div>
           <span>페어링 코드</span>
         </div>
-        <div class="flow-card">
+        <div class="flow-card reveal" style="--d:2;">
           <div class="tag">Target Mac</div>
           <div class="big">한/영 ↔ ABC 전환</div>
           <div class="cap">조작할 다른 Mac · 로컬 네트워크만 필요</div>
         </div>
       </div>
 
-      <table class="roles" style="text-align:left;">
+      <table class="roles reveal" style="text-align:left;--d:3;">
         <thead>
           <tr><th>Mac</th><th>역할</th><th>필요한 권한</th><th>할 일</th></tr>
         </thead>
@@ -365,21 +446,21 @@
 
   <section>
     <div class="wrap">
-      <div class="kicker">개인정보</div>
-      <h2>조용히, 필요한 것만</h2>
-      <p class="lede">Caps Lock과 입력 소스 상태 외에는 아무것도 들여다보지 않습니다.</p>
+      <div class="kicker reveal" style="--d:0;">개인정보</div>
+      <h2 class="reveal" style="--d:1;">조용히, 필요한 것만</h2>
+      <p class="lede reveal" style="--d:2;">Caps Lock과 입력 소스 상태 외에는 아무것도 들여다보지 않습니다.</p>
       <div class="privacy-grid">
-        <div class="privacy-card">
+        <div class="privacy-card reveal" style="--d:0;">
           <div class="ico">⌨️</div>
           <h4>일반 키 입력 미처리</h4>
           <p>물리 Caps Lock 눌림만 감지하며, 그 외 키 입력은 그대로 통과시킵니다.</p>
         </div>
-        <div class="privacy-card">
+        <div class="privacy-card reveal" style="--d:1;">
           <div class="ico">🔒</div>
           <h4>수집하지 않음</h4>
           <p>입력한 텍스트, 클립보드, 마우스 이벤트를 수집하거나 서버로 전송하지 않습니다.</p>
         </div>
-        <div class="privacy-card">
+        <div class="privacy-card reveal" style="--d:2;">
           <div class="ico">🛜</div>
           <h4>로컬 네트워크 한정</h4>
           <p>같은 LAN의 Bonjour와 페어링 코드로만 연결되며, 외부 서버를 거치지 않습니다.</p>
@@ -388,63 +469,28 @@
     </div>
   </section>
 
-  <section id="install">
-    <div class="wrap">
-      <div class="kicker">빠른 시작</div>
-      <h2>설치는 명령어 한 줄이면 충분합니다</h2>
-      <p class="lede">최신 Release를 내려받아 SHA-256 체크섬과 앱 서명을 확인한 뒤 /Applications에 설치합니다.</p>
-
-      <div class="install-grid">
-        <div>
-          <div class="code-block">
-            <button class="copy-btn" data-copy="curl -fsSL https://github.com/feelgom/universal-control-helper/releases/latest/download/install.sh | bash">복사</button>
-            <code>curl -fsSL https://github.com/feelgom/universal-control-helper/releases/latest/download/install.sh | bash</code>
-          </div>
-          <p class="install-note">
-            실행 전 스크립트 내용을 확인하려면 <code>curl ... -o install.sh</code>로 내려받아 검토한 뒤 실행하세요.
-            자동 실행 없이 설치하려면 <code>--no-launch</code>, 다른 폴더에 설치하려면 <code>--install-dir</code> 옵션을 사용할 수 있습니다.
-          </p>
-          <p class="install-note">
-            스크립트 대신 직접 설치하려면 <a href="https://github.com/feelgom/universal-control-helper/releases/latest" style="color:var(--accent-1);">최신 Release</a>에서
-            <code>UniversalControlHelper-macOS-universal.zip</code>을 내려받아 압축을 풀고 앱을 <code>/Applications</code>로 옮기면 됩니다.
-          </p>
-        </div>
-        <div class="side-card">
-          <h4>설치 전 확인할 것</h4>
-          <ul class="req-list">
-            <li><span>운영체제</span><span>macOS 13 이상</span></li>
-            <li><span>입력 조합</span><span>ABC ↔ 두벌식</span></li>
-            <li><span>네트워크</span><span>두 Mac이 같은 신뢰된 LAN</span></li>
-            <li><span>Universal Control</span><span>두 Mac 모두 활성화</span></li>
-            <li><span>라이선스</span><span>MIT · 무료</span></li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  </section>
-
   <section id="trust">
     <div class="wrap">
-      <div class="kicker">오픈소스 &amp; 보안</div>
-      <h2>코드는 전부 공개되어 있습니다</h2>
-      <p class="lede">입력 모니터링 권한을 요청하는 앱이기에, 무엇을 하고 무엇을 하지 않는지 코드로 직접 확인할 수 있어야 한다고 생각합니다.</p>
+      <div class="kicker reveal" style="--d:0;">오픈소스 &amp; 보안</div>
+      <h2 class="reveal" style="--d:1;">코드는 전부 공개되어 있습니다</h2>
+      <p class="lede reveal" style="--d:2;">입력 모니터링 권한을 요청하는 앱이기에, 무엇을 하고 무엇을 하지 않는지 코드로 직접 확인할 수 있어야 한다고 생각합니다.</p>
       <div class="trust-grid">
-        <div class="trust-card">
+        <div class="trust-card reveal" style="--d:0;">
           <div class="ico">📖</div>
           <h4>MIT 오픈소스</h4>
           <p>전체 소스코드가 GitHub에 공개되어 있고 누구나 검토·기여할 수 있습니다.</p>
         </div>
-        <div class="trust-card">
+        <div class="trust-card reveal" style="--d:1;">
           <div class="ico">🪪</div>
           <h4>Developer ID 서명 · 공증</h4>
           <p>정식 빌드는 Apple Developer ID로 서명하고 공증을 거쳐 배포됩니다.</p>
         </div>
-        <div class="trust-card">
+        <div class="trust-card reveal" style="--d:2;">
           <div class="ico">🔁</div>
           <h4>Sparkle 자동 업데이트</h4>
           <p>EdDSA로 서명된 업데이트만 GitHub Release에서 확인·적용합니다.</p>
         </div>
-        <div class="trust-card">
+        <div class="trust-card reveal" style="--d:3;">
           <div class="ico">🛡️</div>
           <h4>비공개 보안 신고</h4>
           <p>취약점은 공개 이슈 대신 보안 정책의 비공개 채널로 제보받습니다.</p>
@@ -455,9 +501,9 @@
 
   <section class="final-cta" style="border-top:1px solid var(--border);">
     <div class="wrap">
-      <h2>이제 Caps Lock을 신경 쓰지 마세요</h2>
-      <p class="lede center">무료이고, 오픈소스이며, 설치는 1분이면 끝납니다.</p>
-      <div class="cta-row">
+      <h2 class="reveal" style="--d:0;">이제 Caps Lock을 신경 쓰지 마세요</h2>
+      <p class="lede center reveal" style="--d:1;">무료이고, 오픈소스이며, 설치는 1분이면 끝납니다.</p>
+      <div class="cta-row reveal" style="--d:2;">
         <a class="btn btn-primary" href="https://github.com/feelgom/universal-control-helper/releases/latest">⌘ 최신 버전 다운로드</a>
         <a class="btn btn-ghost" href="https://github.com/feelgom/universal-control-helper#사용법">사용법 자세히 보기</a>
       </div>
@@ -491,6 +537,18 @@
     try { document.execCommand('copy'); } catch (e) {}
     document.body.removeChild(ta);
   }
+  if ('IntersectionObserver' in window) {
+    var revealIO = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          revealIO.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+    document.querySelectorAll('.reveal').forEach(function (el) { revealIO.observe(el); });
+  }
+
   document.querySelectorAll('.copy-btn').forEach(function (btn) {
     btn.addEventListener('click', function () {
       var text = btn.getAttribute('data-copy');
