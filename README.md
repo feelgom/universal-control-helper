@@ -109,7 +109,7 @@ Source Mac ── Bonjour / 같은 LAN ──▶ Target Mac
 
 ## 업데이트
 
-앱은 [Sparkle](https://sparkle-project.org/)로 GitHub Release의 EdDSA 서명 업데이트를 확인합니다. 메뉴 막대에서 **업데이트 확인…**을 선택하거나 기본 주기 확인을 이용할 수 있습니다.
+앱은 [Sparkle](https://sparkle-project.org/)로 GitHub Release의 EdDSA 서명 업데이트를 확인합니다. 메뉴 막대에서 **업데이트 확인**..을 선택하거나 기본 주기 확인을 이용할 수 있습니다.
 
 Developer ID가 없는 현재 빌드는 버전 교체 후 Source Mac의 접근성 또는 입력 모니터링 권한을 다시 요청할 수 있습니다.
 
@@ -126,11 +126,11 @@ REQUIRE_UNIVERSAL=1 ./scripts/verify-release.sh
 ## Star History
 
 <p align="center">
-  <a href="https://www.star-history.com/#feelgom/universal-control-helper&type=date">
+  <a href="https://www.star-history.com/?repos=feelgom%2Funiversal-control-helper&type=date&legend=top-left">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=feelgom/universal-control-helper&type=date&theme=dark" />
-      <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=feelgom/universal-control-helper&type=date" />
-      <img alt="Universal Control Helper Star History" src="https://api.star-history.com/svg?repos=feelgom/universal-control-helper&type=date" width="760" />
+      <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=feelgom/universal-control-helper&type=date&theme=dark&legend=top-left&sealed_token=FwEg8EPGkwsDKHlbN4MhzmytFu5S0LOeuuX13EWlrAvb6dZKzGz0W7xg_2wxftWukmAlnqMS9DlVzbhB1zmZXNecoFq1n6Y6Mt30B8OCIzTj10uCc3ZKJQ" />
+      <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=feelgom/universal-control-helper&type=date&legend=top-left&sealed_token=FwEg8EPGkwsDKHlbN4MhzmytFu5S0LOeuuX13EWlrAvb6dZKzGz0W7xg_2wxftWukmAlnqMS9DlVzbhB1zmZXNecoFq1n6Y6Mt30B8OCIzTj10uCc3ZKJQ" />
+      <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=feelgom/universal-control-helper&type=date&legend=top-left&sealed_token=FwEg8EPGkwsDKHlbN4MhzmytFu5S0LOeuuX13EWlrAvb6dZKzGz0W7xg_2wxftWukmAlnqMS9DlVzbhB1zmZXNecoFq1n6Y6Mt30B8OCIzTj10uCc3ZKJQ" />
     </picture>
   </a>
 </p>
