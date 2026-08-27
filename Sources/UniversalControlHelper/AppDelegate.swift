@@ -263,6 +263,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         controller.permissionRefreshRequested = { [weak self] in
             self?.refreshInputMonitoring() ?? false
         }
+        controller.permissionResetRequested = { [weak self] in
+            self?.resetInputMonitoring()
+        }
         controller.helperEnabledDidChange = { [weak self] enabled in
             self?.setHelperEnabled(enabled)
         }
@@ -276,6 +279,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             NSApp.setActivationPolicy(.accessory)
         }
         return controller
+    }
+
+    private func resetInputMonitoring() {
+        let alert = NSAlert()
+        alert.messageText = "입력 모니터링 권한을 다시 등록할까요?"
+        alert.informativeText = "Universal Control Helper의 오래된 권한 항목만 제거합니다. 다른 앱의 권한은 변경하지 않습니다."
+        alert.addButton(withTitle: "재등록")
+        alert.addButton(withTitle: "취소")
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+
+        physicalCapsLockMonitor?.stop()
+        inputMonitoringReady = false
+        guard AppPermissions.resetInputMonitoring() else {
+            let failure = NSAlert()
+            failure.messageText = "권한 항목을 초기화하지 못했습니다."
+            failure.informativeText = "터미널에서 다음 명령을 실행해 주세요.\n\ntccutil reset ListenEvent io.yoonsungji.UniInputFix"
+            failure.addButton(withTitle: "확인")
+            failure.runModal()
+            return
+        }
+
+        connectionStatus = "입력 모니터링을 다시 허용해 주세요"
+        _ = refreshInputMonitoring()
+        AppPermissions.openInputMonitoringSettings()
     }
 
     @objc private func showSettings() {

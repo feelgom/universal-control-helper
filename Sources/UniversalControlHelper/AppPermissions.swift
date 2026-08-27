@@ -38,4 +38,19 @@ enum AppPermissions {
         ) else { return }
         NSWorkspace.shared.open(url)
     }
+
+    static func resetInputMonitoring() -> Bool {
+        guard let bundleIdentifier = Bundle.main.bundleIdentifier else { return false }
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/tccutil")
+        process.arguments = ["reset", "ListenEvent", bundleIdentifier]
+
+        do {
+            try process.run()
+            process.waitUntilExit()
+            return process.terminationStatus == 0
+        } catch {
+            return false
+        }
+    }
 }

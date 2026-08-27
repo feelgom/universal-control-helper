@@ -32,6 +32,7 @@ final class SettingsViewModel: ObservableObject {
     var pairingCodeDidChange: ((String) -> Bool)?
     var pairingCodeRegenerationRequested: (() -> String)?
     var permissionRefreshRequested: (() -> Bool)?
+    var permissionResetRequested: (() -> Void)?
     var helperEnabledDidChange: ((Bool) -> Void)?
     var updateCheckRequested: (() -> Void)?
     var launchAtLoginDidChange: ((Bool) -> LaunchAtLoginChangeResult)?
@@ -96,6 +97,10 @@ final class SettingsViewModel: ObservableObject {
         inputMonitoring = AppPermissions.inputMonitoring
     }
 
+    func resetInputMonitoring() {
+        permissionResetRequested?()
+    }
+
     func setHelperEnabled(_ enabled: Bool) {
         helperEnabled = enabled
         helperEnabledDidChange?(enabled)
@@ -125,6 +130,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     var pairingCodeDidChange: ((String) -> Bool)?
     var pairingCodeRegenerationRequested: (() -> String)?
     var permissionRefreshRequested: (() -> Bool)?
+    var permissionResetRequested: (() -> Void)?
     var helperEnabledDidChange: ((Bool) -> Void)?
     var updateCheckRequested: (() -> Void)?
     var launchAtLoginDidChange: ((Bool) -> LaunchAtLoginChangeResult)?
@@ -157,6 +163,9 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         }
         model.permissionRefreshRequested = { [weak self] in
             self?.permissionRefreshRequested?() ?? false
+        }
+        model.permissionResetRequested = { [weak self] in
+            self?.permissionResetRequested?()
         }
         model.helperEnabledDidChange = { [weak self] enabled in
             self?.helperEnabledDidChange?(enabled)
@@ -390,10 +399,17 @@ private struct SettingsView: View {
                     .accessibilityLabel("입력 모니터링 설정 열기")
                 }
 
+                Text("스위치가 켜져 있는데도 미허용이면 권한 항목을 재등록해 주세요.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
                 HStack {
-                    Text("기존 항목의 스위치가 켜져 있어도 미허용이면 한 번 껐다가 다시 켜 주세요.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    if !model.inputMonitoringReady {
+                        Button("권한 항목 재등록…", role: .destructive) {
+                            model.resetInputMonitoring()
+                        }
+                        .controlSize(.small)
+                    }
                     Spacer()
                     Button {
                         model.refreshInputMonitoring()
@@ -446,7 +462,7 @@ private struct SettingsView: View {
         case .granted:
             return "권한은 허용됐지만 감지를 시작하지 못했습니다. 앱을 다시 실행해 주세요."
         case .denied:
-            return "현재 빌드에는 미허용 · 설정 스위치를 껐다 켠 뒤 다시 확인하세요."
+            return "현재 빌드에는 미허용 · 설정에서 허용하거나 권한 항목을 재등록하세요."
         case .notDetermined:
             return "아직 허용되지 않음 · 설정에서 입력 모니터링을 허용하세요."
         }

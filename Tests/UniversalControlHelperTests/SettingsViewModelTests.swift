@@ -73,6 +73,16 @@ final class SettingsViewModelTests: XCTestCase {
         XCTAssertTrue(model.inputMonitoringReady)
     }
 
+    func testPermissionResetInvokesRecoveryCallback() {
+        let model = SettingsViewModel()
+        var resetRequested = false
+        model.permissionResetRequested = { resetRequested = true }
+
+        model.resetInputMonitoring()
+
+        XCTAssertTrue(resetRequested)
+    }
+
     func testHelperEnabledInvokesCallback() {
         let model = SettingsViewModel()
         var requestedValue: Bool?
@@ -108,7 +118,7 @@ final class SettingsViewModelTests: XCTestCase {
             connectionStatus: status,
             inputMonitoringReady: false,
             helperEnabled: true,
-            currentVersion: "1.5.1",
+            currentVersion: "1.5.2",
             canCheckForUpdates: true,
             launchAtLoginState: .disabled
         )
