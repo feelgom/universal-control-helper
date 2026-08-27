@@ -6,6 +6,10 @@ struct SettingsSnapshot {
     let pairingCode: String
     let connectionStatus: String
     let inputMonitoringReady: Bool
+    let helperEnabled: Bool
+    let currentVersion: String
+    let canCheckForUpdates: Bool
+    let launchAtLoginState: LaunchAtLoginState
 }
 
 final class SettingsViewModel: ObservableObject {
@@ -14,6 +18,12 @@ final class SettingsViewModel: ObservableObject {
     @Published private(set) var connectionStatus = "시작 중"
     @Published private(set) var inputMonitoring = PermissionState.notDetermined
     @Published private(set) var inputMonitoringReady = false
+    @Published private(set) var helperEnabled = true
+    @Published private(set) var currentVersion = "-"
+    @Published private(set) var canCheckForUpdates = false
+    @Published private(set) var launchAtLoginEnabled = false
+    @Published private(set) var launchAtLoginRequiresApproval = false
+    @Published private(set) var launchAtLoginFeedback: String?
     @Published var pairingCodeFeedback: String?
     @Published var pairingCodeIsValid = true
     private var pairingCodeIsDirty = false
@@ -23,6 +33,9 @@ final class SettingsViewModel: ObservableObject {
     var pairingCodeRegenerationRequested: (() -> String)?
     var permissionRefreshRequested: (() -> Bool)?
     var permissionResetRequested: (() -> Void)?
+    var helperEnabledDidChange: ((Bool) -> Void)?
+    var updateCheckRequested: (() -> Void)?
+    var launchAtLoginDidChange: ((Bool) -> LaunchAtLoginChangeResult)?
 
     func resetInputMonitoring() {
         permissionResetRequested?()
@@ -35,6 +48,10 @@ final class SettingsViewModel: ObservableObject {
         }
         connectionStatus = snapshot.connectionStatus
         inputMonitoringReady = snapshot.inputMonitoringReady
+        helperEnabled = snapshot.helperEnabled
+        currentVersion = snapshot.currentVersion
+        canCheckForUpdates = snapshot.canCheckForUpdates
+        applyLaunchAtLoginState(snapshot.launchAtLoginState)
     }
 
     func refreshPermissions(recheckRuntime: Bool = false) {
@@ -78,6 +95,33 @@ final class SettingsViewModel: ObservableObject {
         pairingCodeIsValid = true
         pairingCodeFeedback = "새 코드를 생성했습니다. Target Mac에 입력해 주세요."
     }
+
+    func checkForUpdates() {
+        updateCheckRequested?()
+    }
+
+    func setHelperEnabled(_ enabled: Bool) {
+        helperEnabled = enabled
+        helperEnabledDidChange?(enabled)
+    }
+
+    func setLaunchAtLogin(_ enabled: Bool) {
+        guard let result = launchAtLoginDidChange?(enabled) else { return }
+        applyLaunchAtLoginState(result.state)
+        launchAtLoginFeedback = result.message
+    }
+
+    func openLoginItemsSettings() {
+        LaunchAtLogin.openSystemSettings()
+    }
+
+    private func applyLaunchAtLoginState(_ state: LaunchAtLoginState) {
+        launchAtLoginEnabled = state.isEnabled
+        launchAtLoginRequiresApproval = state == .requiresApproval
+        if state != .requiresApproval {
+            launchAtLoginFeedback = nil
+        }
+    }
 }
 
 final class SettingsWindowController: NSWindowController, NSWindowDelegate {
@@ -86,6 +130,9 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     var pairingCodeRegenerationRequested: (() -> String)?
     var permissionRefreshRequested: (() -> Bool)?
     var permissionResetRequested: (() -> Void)?
+    var helperEnabledDidChange: ((Bool) -> Void)?
+    var updateCheckRequested: (() -> Void)?
+    var launchAtLoginDidChange: ((Bool) -> LaunchAtLoginChangeResult)?
 
     private let model = SettingsViewModel()
 
@@ -95,8 +142,8 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         let window = NSWindow(contentViewController: hostingController)
         window.title = "Universal Control Helper 설정"
         window.styleMask = [.titled, .closable, .miniaturizable]
-        window.setContentSize(NSSize(width: 580, height: 590))
-        window.minSize = NSSize(width: 540, height: 560)
+        window.setContentSize(NSSize(width: 600, height: 680))
+        window.minSize = NSSize(width: 560, height: 620)
         window.isReleasedWhenClosed = false
         window.center()
 
@@ -114,6 +161,16 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         }
         model.permissionResetRequested = { [weak self] in
             self?.permissionResetRequested?()
+        }
+        model.helperEnabledDidChange = { [weak self] enabled in
+            self?.helperEnabledDidChange?(enabled)
+        }
+        model.updateCheckRequested = { [weak self] in
+            self?.updateCheckRequested?()
+        }
+        model.launchAtLoginDidChange = { [weak self] enabled in
+            self?.launchAtLoginDidChange?(enabled)
+                ?? LaunchAtLoginChangeResult(state: .unavailable, message: nil)
         }
     }
 
@@ -151,11 +208,14 @@ private struct SettingsView: View {
         VStack(alignment: .leading, spacing: 18) {
             header
             connectionSection
-            permissionSection
+            if model.role == .source {
+                permissionSection
+            }
+            generalSection
             Spacer(minLength: 0)
         }
         .padding(24)
-        .frame(minWidth: 540, idealWidth: 580, minHeight: 560, idealHeight: 590)
+        .frame(minWidth: 560, idealWidth: 600, minHeight: 620, idealHeight: 680)
         .onReceive(NotificationCenter.default.publisher(for: .focusPairingCode)) { _ in
             pairingCodeFocused = true
         }
@@ -163,11 +223,11 @@ private struct SettingsView: View {
 
     private var header: some View {
         HStack(spacing: 14) {
-            Image(systemName: "keyboard.badge.ellipsis")
-                .font(.system(size: 28, weight: .medium))
-                .foregroundStyle(.tint)
-                .frame(width: 42, height: 42)
-                .background(.tint.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
+            Image(nsImage: NSApp.applicationIconImage)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 52, height: 52)
+                .accessibilityLabel("Universal Control Helper 앱 아이콘")
 
             VStack(alignment: .leading, spacing: 3) {
                 Text("Universal Control Helper")
@@ -268,55 +328,90 @@ private struct SettingsView: View {
     }
 
     private var permissionSection: some View {
-        GroupBox("개인정보 보호 권한") {
+        GroupBox("입력 권한") {
             VStack(alignment: .leading, spacing: 14) {
-                if model.role == .source {
-                    permissionRow(
-                        title: "입력 모니터링",
-                        detail: inputMonitoringDescription,
-                        color: inputMonitoringColor,
-                        buttonTitle: "설정 열기"
-                    ) {
-                        AppPermissions.openInputMonitoringSettings()
-                    }
-
-                    Divider()
-                }
-
                 permissionRow(
-                    title: "로컬 네트워크",
-                    detail: "두 Mac 검색과 연결에 필요 · macOS가 첫 연결 시 요청",
-                    color: .blue,
+                    title: "입력 모니터링",
+                    detail: inputMonitoringDescription,
+                    color: inputMonitoringColor,
                     buttonTitle: "설정 열기"
                 ) {
-                    AppPermissions.openLocalNetworkSettings()
+                    AppPermissions.openInputMonitoringSettings()
                 }
 
-                if model.role == .source {
-                    Text("Source에는 입력 모니터링과 로컬 네트워크만 필요합니다. 스위치가 켜져 있는데 미허용이면 권한 초기화 후 다시 허용하세요. 다시 확인은 필요할 때 앱을 자동 재실행합니다.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                } else {
-                    Text("Target에는 로컬 네트워크만 필요합니다. 입력 모니터링과 접근성은 필요하지 않습니다.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
+                Text("Source에서 Caps Lock을 감지할 때만 필요합니다. 스위치가 켜져 있는데 미허용이면 권한 초기화 후 다시 허용하세요.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
 
-                if model.role == .source {
-                    HStack {
-                        if !model.inputMonitoringReady {
-                            Button("권한 초기화…", role: .destructive) {
-                                model.resetInputMonitoring()
+                HStack {
+                    if !model.inputMonitoringReady {
+                        Button("권한 초기화…", role: .destructive) {
+                            model.resetInputMonitoring()
+                        }
+                        .controlSize(.small)
+                    }
+                    Spacer()
+                    Button {
+                        model.refreshPermissions(recheckRuntime: true)
+                    } label: {
+                        Label("권한 다시 확인", systemImage: "arrow.clockwise")
+                    }
+                    .controlSize(.small)
+                }
+            }
+            .padding(8)
+        }
+    }
+
+    private var generalSection: some View {
+        GroupBox("일반") {
+            VStack(alignment: .leading, spacing: 14) {
+                Toggle(
+                    "Universal Control Helper 사용",
+                    isOn: Binding(
+                        get: { model.helperEnabled },
+                        set: { model.setHelperEnabled($0) }
+                    )
+                )
+                .accessibilityLabel("Universal Control Helper 사용")
+
+                Divider()
+
+                Toggle(
+                    "Mac에 로그인할 때 자동으로 실행",
+                    isOn: Binding(
+                        get: { model.launchAtLoginEnabled },
+                        set: { model.setLaunchAtLogin($0) }
+                    )
+                )
+                .accessibilityLabel("Mac에 로그인할 때 자동으로 실행")
+
+                if let feedback = model.launchAtLoginFeedback {
+                    HStack(alignment: .firstTextBaseline) {
+                        Text(feedback)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        if model.launchAtLoginRequiresApproval {
+                            Button("로그인 항목 설정 열기") {
+                                model.openLoginItemsSettings()
                             }
                             .controlSize(.small)
                         }
-                        Spacer()
-                        Button {
-                            model.refreshPermissions(recheckRuntime: true)
-                        } label: {
-                            Label("권한 다시 확인", systemImage: "arrow.clockwise")
+                    }
+                }
+
+                Divider()
+
+                LabeledContent("현재 버전") {
+                    HStack(spacing: 10) {
+                        Text(model.currentVersion)
+                            .foregroundStyle(.secondary)
+                        Button("업데이트 확인…") {
+                            model.checkForUpdates()
                         }
-                        .controlSize(.small)
+                        .disabled(!model.canCheckForUpdates)
+                        .accessibilityLabel("새 버전 확인")
                     }
                 }
             }
@@ -360,9 +455,6 @@ private struct SettingsView: View {
     }
 
     private var inputMonitoringDescription: String {
-        if model.role == .target {
-            return "Target에서는 필요 없음"
-        }
         if model.inputMonitoringReady {
             return "사용 가능 · Caps Lock 감지 중"
         }
@@ -377,9 +469,6 @@ private struct SettingsView: View {
     }
 
     private var inputMonitoringColor: Color {
-        if model.role == .target {
-            return .secondary
-        }
         if model.inputMonitoringReady {
             return .green
         }

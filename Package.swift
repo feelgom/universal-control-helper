@@ -26,6 +26,7 @@ let package = Package(
                 .linkedFramework("Carbon"),
                 .linkedFramework("IOKit"),
                 .linkedFramework("Network"),
+                .linkedFramework("ServiceManagement"),
             ]
         ),
         .testTarget(name: "UniversalControlCoreTests", dependencies: ["UniversalControlCore"]),

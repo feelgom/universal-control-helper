@@ -10,6 +10,7 @@ final class Preferences {
     private enum Key {
         static let role = "computerRole"
         static let pairingCode = "pairingCode"
+        static let helperEnabled = "helperEnabled"
     }
 
     private let defaults: UserDefaults
@@ -18,6 +19,9 @@ final class Preferences {
         self.defaults = defaults
         if defaults.string(forKey: Key.role) == nil {
             defaults.set(ComputerRole.source.rawValue, forKey: Key.role)
+        }
+        if defaults.object(forKey: Key.helperEnabled) == nil {
+            defaults.set(true, forKey: Key.helperEnabled)
         }
         if let code = defaults.string(forKey: Key.pairingCode), PairingCode.isValid(code) {
             return
@@ -36,5 +40,10 @@ final class Preferences {
             precondition(PairingCode.isValid(newValue))
             defaults.set(newValue, forKey: Key.pairingCode)
         }
+    }
+
+    var helperEnabled: Bool {
+        get { defaults.bool(forKey: Key.helperEnabled) }
+        set { defaults.set(newValue, forKey: Key.helperEnabled) }
     }
 }

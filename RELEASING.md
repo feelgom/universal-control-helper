@@ -19,7 +19,7 @@
 4. 버전 커밋에 태그를 만들고 푸시합니다.
 
    ```sh
-   git tag v1.3.1
+   git tag v1.4.0
    git push origin main --tags
    ```
 

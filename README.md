@@ -80,7 +80,9 @@ bash /tmp/universal-control-helper-install.sh --install-dir "$HOME/Applications"
 4. Source에 자동 생성된 **페어링 코드**를 Target에 입력합니다.
 5. 두 Mac에서 로컬 네트워크를 허용하고, Source에서만 입력 모니터링을 허용합니다.
 
-설정창에서는 역할, 연결 상태, 페어링 코드와 권한 상태를 한 번에 확인할 수 있습니다. `Command-Tab`으로 앱을 선택하거나 `Command-,`를 누르면 설정창으로 돌아옵니다. Source에는 입력 모니터링과 로컬 네트워크를, Target에는 로컬 네트워크만 표시합니다. 접근성 권한은 필요하지 않습니다.
+설정창에서는 역할, 연결 상태, 페어링 코드, Source의 입력 모니터링 상태를 한 번에 확인할 수 있습니다. `Command-Tab`으로 앱을 선택하거나 `Command-,`를 누르면 설정창으로 돌아오고, `Command-W`로 설정창만 닫을 수 있습니다. 로컬 네트워크 권한은 첫 연결 때 macOS가 자동으로 요청하므로 별도의 설정 항목으로 표시하지 않습니다. 접근성 권한은 필요하지 않습니다.
+
+메뉴 막대의 상단 스위치나 설정창의 **Universal Control Helper 사용**을 끄면 Caps Lock 감지와 두 Mac 간 연결이 함께 일시 중지됩니다. **Mac에 로그인할 때 자동으로 실행**을 켜면 별도 헬퍼 없이 macOS 로그인 항목으로 등록됩니다.
 
 ## 어떻게 동작하나요?
 
@@ -109,7 +111,7 @@ Source Mac ── Bonjour / 같은 LAN ──▶ Target Mac
 
 ## 업데이트
 
-앱은 [Sparkle](https://sparkle-project.org/)로 GitHub Release의 EdDSA 서명 업데이트를 확인합니다. 메뉴 막대에서 **업데이트 확인**..을 선택하거나 기본 주기 확인을 이용할 수 있습니다.
+앱은 [Sparkle](https://sparkle-project.org/)로 GitHub Release의 EdDSA 서명 업데이트를 확인합니다. 메뉴 막대나 설정창의 **업데이트 확인…**을 선택하거나 기본 주기 확인을 이용할 수 있습니다. 설정창의 일반 섹션에서 현재 설치된 버전도 확인할 수 있습니다.
 
 Developer ID가 없는 현재 공개 빌드는 버전이 바뀌면 macOS가 새 앱으로 인식해 Source Mac의 입력 모니터링 권한을 다시 요청할 수 있습니다. 시스템 설정의 스위치가 켜져 있는데 **현재 앱에는 미허용**으로 표시되면 **권한 초기화…**로 이 앱의 오래된 항목만 정리한 뒤 현재 앱을 다시 허용하세요. **권한 다시 확인**은 실제 HID 모니터를 다시 열고, macOS가 재실행을 요구하는 경우 앱을 자동으로 다시 시작합니다.
 

@@ -38,10 +38,6 @@ enum AppPermissions {
         openSystemSettings(anchor: "Privacy_ListenEvent")
     }
 
-    static func openLocalNetworkSettings() {
-        openSystemSettings(anchor: "Privacy_LocalNetwork")
-    }
-
     static func resetInputMonitoring() -> Bool {
         guard let bundleIdentifier = Bundle.main.bundleIdentifier else { return false }
 

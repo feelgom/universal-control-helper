@@ -73,6 +73,41 @@ final class SettingsViewModelTests: XCTestCase {
         XCTAssertTrue(resetRequested)
     }
 
+    func testUpdateCheckInvokesCallback() {
+        let model = SettingsViewModel()
+        var updateCheckRequested = false
+        model.updateCheckRequested = { updateCheckRequested = true }
+
+        model.checkForUpdates()
+
+        XCTAssertTrue(updateCheckRequested)
+    }
+
+    func testHelperEnabledInvokesCallback() {
+        let model = SettingsViewModel()
+        var requestedValue: Bool?
+        model.helperEnabledDidChange = { requestedValue = $0 }
+
+        model.setHelperEnabled(false)
+
+        XCTAssertFalse(model.helperEnabled)
+        XCTAssertEqual(requestedValue, false)
+    }
+
+    func testLaunchAtLoginUsesActualResult() {
+        let model = SettingsViewModel()
+        model.launchAtLoginDidChange = { requested in
+            XCTAssertTrue(requested)
+            return LaunchAtLoginChangeResult(state: .requiresApproval, message: "승인 필요")
+        }
+
+        model.setLaunchAtLogin(true)
+
+        XCTAssertFalse(model.launchAtLoginEnabled)
+        XCTAssertTrue(model.launchAtLoginRequiresApproval)
+        XCTAssertEqual(model.launchAtLoginFeedback, "승인 필요")
+    }
+
     private func snapshot(
         pairingCode: String,
         status: String = "대상 Mac 검색 중"
@@ -81,7 +116,11 @@ final class SettingsViewModelTests: XCTestCase {
             role: .source,
             pairingCode: pairingCode,
             connectionStatus: status,
-            inputMonitoringReady: false
+            inputMonitoringReady: false,
+            helperEnabled: true,
+            currentVersion: "1.4.0",
+            canCheckForUpdates: true,
+            launchAtLoginState: .disabled
         )
     }
 }

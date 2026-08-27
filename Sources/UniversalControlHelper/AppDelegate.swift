@@ -9,6 +9,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var sourceClient: SourceClient?
     private var inputRelay: InputRelay?
     private var settingsController: SettingsWindowController?
+    private var updaterReadinessObservation: NSKeyValueObservation?
     private var connectionStatus = "시작 중"
     private var inputMonitoringReady = false
     private lazy var updaterController = SPUStandardUpdaterController(
@@ -23,6 +24,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         configureStatusItemButton()
         configureMainMenu()
         _ = updaterController
+        updaterReadinessObservation = updaterController.updater.observe(
+            \.canCheckForUpdates,
+            options: [.initial, .new]
+        ) { [weak self] _, _ in
+            DispatchQueue.main.async { [weak self] in self?.refreshInterface() }
+        }
         configureForCurrentRole()
         DispatchQueue.main.async { [weak self] in self?.showSettings() }
     }
@@ -50,6 +57,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         inputRelay?.stop()
         inputRelay = nil
         inputMonitoringReady = preferences.role == .target
+
+        guard preferences.helperEnabled else {
+            connectionStatus = "꺼짐"
+            inputMonitoringReady = false
+            refreshInterface()
+            return
+        }
 
         switch preferences.role {
         case .source:
@@ -81,6 +95,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private var displayedConnectionStatus: String {
+        if !preferences.helperEnabled {
+            return "꺼짐"
+        }
         if preferences.role == .source, !inputMonitoringReady {
             return "입력 모니터링 권한 필요"
         }
@@ -92,8 +109,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             role: preferences.role,
             pairingCode: preferences.pairingCode,
             connectionStatus: displayedConnectionStatus,
-            inputMonitoringReady: inputMonitoringReady
+            inputMonitoringReady: inputMonitoringReady,
+            helperEnabled: preferences.helperEnabled,
+            currentVersion: displayedVersion,
+            canCheckForUpdates: updaterController.updater.canCheckForUpdates,
+            launchAtLoginState: LaunchAtLogin.state
         )
+    }
+
+    private var displayedVersion: String {
+        let info = Bundle.main.infoDictionary
+        let version = info?["CFBundleShortVersionString"] as? String ?? "개발 빌드"
+        let build = info?["CFBundleVersion"] as? String
+        guard let build, build != version else { return version }
+        return "\(version) (\(build))"
     }
 
     private func refreshInterface() {
@@ -110,6 +139,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let settings = NSMenuItem(title: "설정…", action: #selector(showSettings), keyEquivalent: ",")
         settings.target = self
         appMenu.addItem(settings)
+
+        let closeWindow = NSMenuItem(
+            title: "윈도우 닫기",
+            action: #selector(closeSettingsWindow),
+            keyEquivalent: "w"
+        )
+        closeWindow.target = self
+        appMenu.addItem(closeWindow)
         appMenu.addItem(.separator())
 
         let quitItem = NSMenuItem(
@@ -129,9 +166,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard statusItem != nil else { return }
         let menu = NSMenu()
 
-        let title = NSMenuItem(title: "Universal Control Helper", action: nil, keyEquivalent: "")
-        title.isEnabled = false
-        menu.addItem(title)
+        let header = NSMenuItem()
+        let headerView = StatusMenuHeaderView(
+            isEnabled: preferences.helperEnabled,
+            status: displayedConnectionStatus
+        )
+        headerView.enabledDidChange = { [weak self] enabled in
+            self?.setHelperEnabled(enabled)
+        }
+        header.view = headerView
+        menu.addItem(header)
         menu.addItem(.separator())
 
         let source = NSMenuItem(title: "키보드 Mac (Source)", action: #selector(selectSource), keyEquivalent: "")
@@ -200,6 +244,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         configureForCurrentRole()
     }
 
+    private func setHelperEnabled(_ enabled: Bool) {
+        guard preferences.helperEnabled != enabled else {
+            refreshInterface()
+            return
+        }
+        preferences.helperEnabled = enabled
+        connectionStatus = enabled ? "시작 중" : "꺼짐"
+        configureForCurrentRole()
+    }
+
     private func applyPairingCode(_ code: String) -> Bool {
         guard PairingCode.isValid(code) else { return false }
         guard preferences.pairingCode != code else { return true }
@@ -248,6 +302,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return ready
         }
         controller.permissionResetRequested = { [weak self] in self?.resetInputMonitoring() }
+        controller.helperEnabledDidChange = { [weak self] enabled in
+            self?.setHelperEnabled(enabled)
+        }
+        controller.updateCheckRequested = { [weak self] in self?.checkForUpdates() }
+        controller.launchAtLoginDidChange = { [weak self] enabled in
+            let result = LaunchAtLogin.setEnabled(enabled)
+            self?.refreshInterface()
+            return result
+        }
         return controller
     }
 
@@ -302,6 +365,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         settingsController?.present(snapshot: settingsSnapshot)
     }
 
+    @objc private func closeSettingsWindow() {
+        settingsController?.window?.performClose(nil)
+    }
+
     @objc private func showPairingSettings() {
         if settingsController == nil {
             settingsController = makeSettingsController()
@@ -350,5 +417,63 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationWillTerminate(_ notification: Notification) {
         inputRelay?.stop()
         transport?.stop()
+    }
+}
+
+private final class StatusMenuHeaderView: NSView {
+    var enabledDidChange: ((Bool) -> Void)?
+
+    private let enabledSwitch = NSSwitch()
+
+    init(isEnabled: Bool, status: String) {
+        super.init(frame: NSRect(x: 0, y: 0, width: 310, height: 64))
+
+        let iconView = NSImageView(image: NSApp.applicationIconImage)
+        iconView.imageScaling = .scaleProportionallyUpOrDown
+        iconView.translatesAutoresizingMaskIntoConstraints = false
+
+        let title = NSTextField(labelWithString: "Universal Control Helper")
+        title.font = .systemFont(ofSize: 14, weight: .semibold)
+
+        let subtitle = NSTextField(labelWithString: status)
+        subtitle.font = .systemFont(ofSize: 11)
+        subtitle.textColor = .secondaryLabelColor
+        subtitle.lineBreakMode = .byTruncatingTail
+
+        let labels = NSStackView(views: [title, subtitle])
+        labels.orientation = .vertical
+        labels.alignment = .leading
+        labels.spacing = 2
+        labels.translatesAutoresizingMaskIntoConstraints = false
+
+        enabledSwitch.state = isEnabled ? .on : .off
+        enabledSwitch.target = self
+        enabledSwitch.action = #selector(switchChanged)
+        enabledSwitch.translatesAutoresizingMaskIntoConstraints = false
+
+        addSubview(iconView)
+        addSubview(labels)
+        addSubview(enabledSwitch)
+
+        NSLayoutConstraint.activate([
+            iconView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 14),
+            iconView.centerYAnchor.constraint(equalTo: centerYAnchor),
+            iconView.widthAnchor.constraint(equalToConstant: 38),
+            iconView.heightAnchor.constraint(equalToConstant: 38),
+            labels.leadingAnchor.constraint(equalTo: iconView.trailingAnchor, constant: 10),
+            labels.centerYAnchor.constraint(equalTo: centerYAnchor),
+            labels.trailingAnchor.constraint(lessThanOrEqualTo: enabledSwitch.leadingAnchor, constant: -10),
+            enabledSwitch.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -14),
+            enabledSwitch.centerYAnchor.constraint(equalTo: centerYAnchor),
+        ])
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    @objc private func switchChanged() {
+        enabledDidChange?(enabledSwitch.state == .on)
     }
 }
