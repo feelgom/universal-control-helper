@@ -13,6 +13,17 @@ if [[ "${REQUIRE_UNIVERSAL:-0}" == "1" ]]; then
 fi
 
 otool -L "$APP_DIR/Contents/MacOS/UniInputFix" | grep -q '@rpath/Sparkle.framework'
+otool -l "$APP_DIR/Contents/MacOS/UniInputFix" | grep -q '@executable_path/../Frameworks'
 test -d "$APP_DIR/Contents/Frameworks/Sparkle.framework"
+
+"$APP_DIR/Contents/MacOS/UniInputFix" &
+APP_PID=$!
+sleep 1
+if ! kill -0 "$APP_PID" 2>/dev/null; then
+  wait "$APP_PID"
+  exit 1
+fi
+kill "$APP_PID"
+wait "$APP_PID" 2>/dev/null || true
 
 echo "Release verification passed: $APP_DIR"

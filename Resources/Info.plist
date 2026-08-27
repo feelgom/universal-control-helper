@@ -15,9 +15,9 @@
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.1.0</string>
+    <string>1.1.1</string>
     <key>CFBundleVersion</key>
-	<string>1.1.0</string>
+    <string>1.1.1</string>
     <key>LSMinimumSystemVersion</key>
     <string>13.0</string>
     <key>LSUIElement</key>
@@ -33,6 +33,6 @@
     <key>SUFeedURL</key>
     <string>https://github.com/feelgom/UniInputFix/releases/latest/download/appcast.xml</string>
     <key>SUPublicEDKey</key>
-	<string>bURjfv9+uysjyYp3GT94KuJ9/FgtQxpCAE1m5yZ1O3A=</string>
+    <string>bURjfv9+uysjyYp3GT94KuJ9/FgtQxpCAE1m5yZ1O3A=</string>
 </dict>
 </plist>

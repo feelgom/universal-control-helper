@@ -4,7 +4,8 @@ set -euo pipefail
 PROJECT_DIR="${0:A:h:h}"
 APP_DIR="$PROJECT_DIR/dist/UniInputFix.app"
 SPARKLE_FRAMEWORK="$PROJECT_DIR/.build/artifacts/sparkle/Sparkle/Sparkle.xcframework/macos-arm64_x86_64/Sparkle.framework"
-APP_VERSION="${APP_VERSION:-1.1.0}"
+PLIST_VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$PROJECT_DIR/Resources/Info.plist")"
+APP_VERSION="${APP_VERSION:-$PLIST_VERSION}"
 BUILD_NUMBER="${BUILD_NUMBER:-$APP_VERSION}"
 CODE_SIGN_IDENTITY="${CODE_SIGN_IDENTITY:--}"
 
@@ -36,6 +37,7 @@ mkdir -p "$APP_DIR/Contents/MacOS" "$APP_DIR/Contents/Resources" "$APP_DIR/Conte
 cp "$BIN_DIR/UniInputFix" "$APP_DIR/Contents/MacOS/UniInputFix"
 cp "$PROJECT_DIR/Resources/Info.plist" "$APP_DIR/Contents/Info.plist"
 ditto "$SPARKLE_FRAMEWORK" "$APP_DIR/Contents/Frameworks/Sparkle.framework"
+install_name_tool -add_rpath "@executable_path/../Frameworks" "$APP_DIR/Contents/MacOS/UniInputFix"
 
 /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $APP_VERSION" "$APP_DIR/Contents/Info.plist"
 /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUMBER" "$APP_DIR/Contents/Info.plist"
