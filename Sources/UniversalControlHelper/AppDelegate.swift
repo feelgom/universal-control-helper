@@ -20,11 +20,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.regular)
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        statusItem.button?.title = "⌨︎↔︎"
+        configureStatusItemButton()
         configureMainMenu()
         _ = updaterController
         configureForCurrentRole()
         DispatchQueue.main.async { [weak self] in self?.showSettings() }
+    }
+
+    private func configureStatusItemButton() {
+        guard let button = statusItem.button else { return }
+        guard let url = Bundle.main.url(forResource: "MenuBarIcon", withExtension: "png"),
+              let image = NSImage(contentsOf: url) else {
+            button.title = "⌨︎↔︎"
+            return
+        }
+
+        image.isTemplate = true
+        image.size = NSSize(width: 24, height: 9)
+        button.image = image
+        button.imagePosition = .imageOnly
+        button.title = ""
+        button.toolTip = "Universal Control Helper"
     }
 
     private func configureForCurrentRole() {
@@ -224,9 +240,59 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self?.regeneratePairingCode() ?? ""
         }
         controller.permissionRefreshRequested = { [weak self] in
-            self?.refreshInputMonitoring() ?? false
+            guard let self else { return false }
+            let ready = self.refreshInputMonitoring()
+            if !ready {
+                DispatchQueue.main.async { [weak self] in self?.restartApplication() }
+            }
+            return ready
         }
+        controller.permissionResetRequested = { [weak self] in self?.resetInputMonitoring() }
         return controller
+    }
+
+    private func resetInputMonitoring() {
+        let alert = NSAlert()
+        alert.messageText = "입력 모니터링 권한을 초기화할까요?"
+        alert.informativeText = "Universal Control Helper의 오래된 권한 항목만 제거합니다. 다른 앱의 권한은 변경하지 않습니다. 이후 시스템 설정에서 현재 앱을 다시 허용해 주세요."
+        alert.addButton(withTitle: "초기화하고 설정 열기")
+        alert.addButton(withTitle: "취소")
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+
+        inputRelay?.stop()
+        inputMonitoringReady = false
+        guard AppPermissions.resetInputMonitoring() else {
+            showInfo(
+                title: "권한 초기화 실패",
+                message: "터미널에서 다음 명령을 실행해 주세요.\n\ntccutil reset ListenEvent io.yoonsungji.UniInputFix"
+            )
+            return
+        }
+
+        connectionStatus = "입력 모니터링을 다시 허용해 주세요"
+        refreshInterface()
+        AppPermissions.openInputMonitoringSettings()
+    }
+
+    private func restartApplication() {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/bin/zsh")
+        process.arguments = [
+            "-c",
+            "sleep 0.5; /usr/bin/open -n \"$1\"",
+            "UniversalControlHelperRestart",
+            Bundle.main.bundlePath,
+        ]
+
+        do {
+            try process.run()
+            NSApp.terminate(nil)
+        } catch {
+            showInfo(
+                title: "앱 재실행 실패",
+                message: "Universal Control Helper를 직접 종료한 뒤 다시 실행해 주세요."
+            )
+        }
     }
 
     @objc private func showSettings() {

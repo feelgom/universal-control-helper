@@ -63,6 +63,16 @@ final class SettingsViewModelTests: XCTestCase {
         XCTAssertTrue(model.inputMonitoringReady)
     }
 
+    func testPermissionResetInvokesRecoveryCallback() {
+        let model = SettingsViewModel()
+        var resetRequested = false
+        model.permissionResetRequested = { resetRequested = true }
+
+        model.resetInputMonitoring()
+
+        XCTAssertTrue(resetRequested)
+    }
+
     private func snapshot(
         pairingCode: String,
         status: String = "대상 Mac 검색 중"

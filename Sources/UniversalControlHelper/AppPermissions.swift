@@ -10,7 +10,12 @@ enum PermissionState {
 
 enum AppPermissions {
     static var inputMonitoring: PermissionState {
-        switch IOHIDCheckAccess(kIOHIDRequestTypeListenEvent) {
+        let hidAccess = IOHIDCheckAccess(kIOHIDRequestTypeListenEvent)
+        if hidAccess == kIOHIDAccessTypeGranted || CGPreflightListenEventAccess() {
+            return .granted
+        }
+
+        switch hidAccess {
         case kIOHIDAccessTypeGranted:
             return .granted
         case kIOHIDAccessTypeDenied:
@@ -20,24 +25,37 @@ enum AppPermissions {
         }
     }
 
-    static var accessibilityGranted: Bool {
-        AXIsProcessTrusted()
-    }
-
     @discardableResult
     static func requestInputMonitoring() -> Bool {
         if inputMonitoring == .granted {
             return true
         }
-        return IOHIDRequestAccess(kIOHIDRequestTypeListenEvent)
+        _ = IOHIDRequestAccess(kIOHIDRequestTypeListenEvent)
+        return inputMonitoring == .granted
     }
 
     static func openInputMonitoringSettings() {
         openSystemSettings(anchor: "Privacy_ListenEvent")
     }
 
-    static func openAccessibilitySettings() {
-        openSystemSettings(anchor: "Privacy_Accessibility")
+    static func openLocalNetworkSettings() {
+        openSystemSettings(anchor: "Privacy_LocalNetwork")
+    }
+
+    static func resetInputMonitoring() -> Bool {
+        guard let bundleIdentifier = Bundle.main.bundleIdentifier else { return false }
+
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/tccutil")
+        process.arguments = ["reset", "ListenEvent", bundleIdentifier]
+
+        do {
+            try process.run()
+            process.waitUntilExit()
+            return process.terminationStatus == 0
+        } catch {
+            return false
+        }
     }
 
     private static func openSystemSettings(anchor: String) {

@@ -15,7 +15,12 @@ final class InputRelay {
     @discardableResult
     func start() -> Bool {
         guard physicalMonitor == nil else { return true }
-        guard AppPermissions.requestInputMonitoring() else { return false }
+        // IOHIDCheckAccess can lag behind System Settings or report a stale
+        // ad-hoc build entry. Request access when needed, but let the actual
+        // IOHIDManager open decide whether this process can monitor input.
+        if AppPermissions.inputMonitoring != .granted {
+            AppPermissions.requestInputMonitoring()
+        }
 
         let monitor = PhysicalInputMonitor()
         monitor.onCapsLockPressed = { [weak self] in

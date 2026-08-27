@@ -14,7 +14,6 @@ final class SettingsViewModel: ObservableObject {
     @Published private(set) var connectionStatus = "시작 중"
     @Published private(set) var inputMonitoring = PermissionState.notDetermined
     @Published private(set) var inputMonitoringReady = false
-    @Published private(set) var accessibilityGranted = false
     @Published var pairingCodeFeedback: String?
     @Published var pairingCodeIsValid = true
     private var pairingCodeIsDirty = false
@@ -23,6 +22,11 @@ final class SettingsViewModel: ObservableObject {
     var pairingCodeDidChange: ((String) -> Bool)?
     var pairingCodeRegenerationRequested: (() -> String)?
     var permissionRefreshRequested: (() -> Bool)?
+    var permissionResetRequested: (() -> Void)?
+
+    func resetInputMonitoring() {
+        permissionResetRequested?()
+    }
 
     func update(snapshot: SettingsSnapshot) {
         role = snapshot.role
@@ -38,7 +42,6 @@ final class SettingsViewModel: ObservableObject {
             inputMonitoringReady = permissionRefreshRequested()
         }
         inputMonitoring = AppPermissions.inputMonitoring
-        accessibilityGranted = AppPermissions.accessibilityGranted
     }
 
     func selectRole(_ newRole: ComputerRole) {
@@ -82,6 +85,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     var pairingCodeDidChange: ((String) -> Bool)?
     var pairingCodeRegenerationRequested: (() -> String)?
     var permissionRefreshRequested: (() -> Bool)?
+    var permissionResetRequested: (() -> Void)?
 
     private let model = SettingsViewModel()
 
@@ -107,6 +111,9 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         }
         model.permissionRefreshRequested = { [weak self] in
             self?.permissionRefreshRequested?() ?? false
+        }
+        model.permissionResetRequested = { [weak self] in
+            self?.permissionResetRequested?()
         }
     }
 
@@ -263,40 +270,54 @@ private struct SettingsView: View {
     private var permissionSection: some View {
         GroupBox("개인정보 보호 권한") {
             VStack(alignment: .leading, spacing: 14) {
-                permissionRow(
-                    title: "입력 모니터링",
-                    detail: inputMonitoringDescription,
-                    color: inputMonitoringColor,
-                    buttonTitle: "설정 열기"
-                ) {
-                    AppPermissions.openInputMonitoringSettings()
-                }
-
-                Divider()
-
-                permissionRow(
-                    title: "접근성",
-                    detail: model.accessibilityGranted
-                        ? "허용됨 · 현재 버전에서는 선택 사항"
-                        : "허용 안 됨 · 현재 버전에서는 필요 없음",
-                    color: model.accessibilityGranted ? .green : .secondary,
-                    buttonTitle: "설정 열기"
-                ) {
-                    AppPermissions.openAccessibilitySettings()
-                }
-
-                Text("Caps Lock을 차단하지 않고 감지만 하므로 Source에는 입력 모니터링만 필요합니다.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-
-                HStack {
-                    Spacer()
-                    Button {
-                        model.refreshPermissions(recheckRuntime: true)
-                    } label: {
-                        Label("권한 다시 확인", systemImage: "arrow.clockwise")
+                if model.role == .source {
+                    permissionRow(
+                        title: "입력 모니터링",
+                        detail: inputMonitoringDescription,
+                        color: inputMonitoringColor,
+                        buttonTitle: "설정 열기"
+                    ) {
+                        AppPermissions.openInputMonitoringSettings()
                     }
-                    .controlSize(.small)
+
+                    Divider()
+                }
+
+                permissionRow(
+                    title: "로컬 네트워크",
+                    detail: "두 Mac 검색과 연결에 필요 · macOS가 첫 연결 시 요청",
+                    color: .blue,
+                    buttonTitle: "설정 열기"
+                ) {
+                    AppPermissions.openLocalNetworkSettings()
+                }
+
+                if model.role == .source {
+                    Text("Source에는 입력 모니터링과 로컬 네트워크만 필요합니다. 스위치가 켜져 있는데 미허용이면 권한 초기화 후 다시 허용하세요. 다시 확인은 필요할 때 앱을 자동 재실행합니다.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                } else {
+                    Text("Target에는 로컬 네트워크만 필요합니다. 입력 모니터링과 접근성은 필요하지 않습니다.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                if model.role == .source {
+                    HStack {
+                        if !model.inputMonitoringReady {
+                            Button("권한 초기화…", role: .destructive) {
+                                model.resetInputMonitoring()
+                            }
+                            .controlSize(.small)
+                        }
+                        Spacer()
+                        Button {
+                            model.refreshPermissions(recheckRuntime: true)
+                        } label: {
+                            Label("권한 다시 확인", systemImage: "arrow.clockwise")
+                        }
+                        .controlSize(.small)
+                    }
                 }
             }
             .padding(8)
@@ -347,9 +368,9 @@ private struct SettingsView: View {
         }
         switch model.inputMonitoring {
         case .granted:
-            return "허용됐지만 감지 시작 실패 · 앱 재실행 필요"
+            return "허용됐지만 감지 시작 실패 · 앱을 다시 실행해 주세요"
         case .denied:
-            return "사용 불가 · 설정에서 허용한 뒤 다시 확인"
+            return "현재 앱에는 미허용 · 허용한 뒤 다시 확인"
         case .notDetermined:
             return "아직 결정되지 않음"
         }
