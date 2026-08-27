@@ -50,15 +50,8 @@ public struct RelayMessage: Codable, Equatable, Sendable {
 public enum RelayProtocol {
     public static let currentVersion = 2
 
-    public static func inputSourceMessage(
-        _ inputSource: InputSourceState,
-        token: String,
-        peerProtocolVersion: Int
-    ) -> RelayMessage {
-        if peerProtocolVersion >= 2 {
-            return .setInputSource(inputSource, token: token)
-        }
-        return .toggleInputSource(token: token)
+    public static func supportsExplicitInputSourceState(_ peerProtocolVersion: Int) -> Bool {
+        peerProtocolVersion >= currentVersion
     }
 }
 

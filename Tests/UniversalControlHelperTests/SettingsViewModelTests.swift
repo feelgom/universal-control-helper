@@ -63,6 +63,16 @@ final class SettingsViewModelTests: XCTestCase {
         XCTAssertTrue(updateCheckRequested)
     }
 
+    func testPermissionRefreshUsesPhysicalMonitorResult() {
+        let model = SettingsViewModel()
+        model.update(snapshot: snapshot(pairingCode: "123456"))
+        model.permissionRefreshRequested = { true }
+
+        model.refreshInputMonitoring()
+
+        XCTAssertTrue(model.inputMonitoringReady)
+    }
+
     func testHelperEnabledInvokesCallback() {
         let model = SettingsViewModel()
         var requestedValue: Bool?
@@ -96,8 +106,9 @@ final class SettingsViewModelTests: XCTestCase {
             role: .source,
             pairingCode: pairingCode,
             connectionStatus: status,
+            inputMonitoringReady: false,
             helperEnabled: true,
-            currentVersion: "1.5.0",
+            currentVersion: "1.5.1",
             canCheckForUpdates: true,
             launchAtLoginState: .disabled
         )

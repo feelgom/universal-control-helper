@@ -1,5 +1,94 @@
 import Carbon
+import IOKit.hid
 import UniversalControlCore
+
+final class PhysicalCapsLockMonitor {
+    var onCapsLockPressed: (() -> Void)?
+
+    private var manager: IOHIDManager?
+
+    @discardableResult
+    func start() -> Bool {
+        guard manager == nil else { return true }
+        if AppPermissions.inputMonitoring != .granted {
+            AppPermissions.requestInputMonitoring()
+        }
+
+        let manager = IOHIDManagerCreate(kCFAllocatorDefault, IOOptionBits(kIOHIDOptionsTypeNone))
+        self.manager = manager
+        let matches: [[String: Int]] = [[
+            kIOHIDDeviceUsagePageKey as String: Int(kHIDPage_GenericDesktop),
+            kIOHIDDeviceUsageKey as String: Int(kHIDUsage_GD_Keyboard),
+        ]]
+        IOHIDManagerSetDeviceMatchingMultiple(manager, matches as CFArray)
+        IOHIDManagerRegisterInputValueCallback(
+            manager,
+            { context, _, _, value in
+                guard let context else { return }
+                let monitor = Unmanaged<PhysicalCapsLockMonitor>
+                    .fromOpaque(context)
+                    .takeUnretainedValue()
+                monitor.handle(value)
+            },
+            Unmanaged.passUnretained(self).toOpaque()
+        )
+        IOHIDManagerScheduleWithRunLoop(
+            manager,
+            CFRunLoopGetMain(),
+            CFRunLoopMode.commonModes.rawValue
+        )
+
+        guard IOHIDManagerOpen(manager, IOOptionBits(kIOHIDOptionsTypeNone)) == kIOReturnSuccess else {
+            IOHIDManagerUnscheduleFromRunLoop(
+                manager,
+                CFRunLoopGetMain(),
+                CFRunLoopMode.commonModes.rawValue
+            )
+            self.manager = nil
+            return false
+        }
+        return true
+    }
+
+    func stop() {
+        guard let manager else { return }
+        IOHIDManagerUnscheduleFromRunLoop(
+            manager,
+            CFRunLoopGetMain(),
+            CFRunLoopMode.commonModes.rawValue
+        )
+        IOHIDManagerClose(manager, IOOptionBits(kIOHIDOptionsTypeNone))
+        self.manager = nil
+    }
+
+    private func handle(_ value: IOHIDValue) {
+        let element = IOHIDValueGetElement(value)
+        guard isPhysicalDevice(IOHIDElementGetDevice(element)) else { return }
+        guard IOHIDElementGetUsagePage(element) == UInt32(kHIDPage_KeyboardOrKeypad),
+              IOHIDElementGetUsage(element) == UInt32(kHIDUsage_KeyboardCapsLock),
+              IOHIDValueGetIntegerValue(value) == 1 else {
+            return
+        }
+        onCapsLockPressed?()
+    }
+
+    private func isPhysicalDevice(_ device: IOHIDDevice?) -> Bool {
+        guard let device else { return false }
+        let transport = property(kIOHIDTransportKey as CFString, device: device).lowercased()
+        let product = property(kIOHIDProductKey as CFString, device: device).lowercased()
+        return !transport.contains("virtual")
+            && !product.contains("virtual")
+            && !product.contains("universal control")
+    }
+
+    private func property(_ key: CFString, device: IOHIDDevice) -> String {
+        IOHIDDeviceGetProperty(device, key) as? String ?? ""
+    }
+
+    deinit {
+        stop()
+    }
+}
 
 final class InputSourceRelay {
     var send: ((InputSourceState) -> Void)?

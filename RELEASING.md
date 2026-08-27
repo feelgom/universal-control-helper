@@ -29,7 +29,7 @@ Sparkle 업데이트 서명에 사용하는 `SPARKLE_PRIVATE_KEY`는 필수입�
 
 Apple 관련 secret이 모두 비어 있으면 Release workflow는 임시 서명 빌드를 정상 배포합니다. 일부만 등록된 불완전한 상태에서는 잘못된 릴리즈를 막기 위해 실패합니다. 모든 값이 있으면 인증서를 작업 중 생성한 임시 키체인에만 가져오고, Developer ID 서명·공증 후 키체인을 삭제합니다.
 
-현재 Bundle ID인 `io.yoonsungji.UniInputFix`는 앱과 업데이트의 신원에 사용되므로 변경하지 않습니다. v1.5.0부터 입력 모니터링 권한은 사용하지 않습니다.
+현재 Bundle ID인 `io.yoonsungji.UniInputFix`는 앱과 업데이트의 신원에 사용되므로 변경하지 않습니다. Source의 물리 Caps Lock 감지에는 입력 모니터링 권한이 필요합니다. Developer ID가 없는 임시 서명에서는 업데이트 후 권한 재확인이 필요할 수 있습니다.
 
 ### 서명·공증 사전 검사
 
@@ -62,7 +62,7 @@ gh workflow run release.yml --ref main
 4. 버전 커밋에 태그를 만들고 푸시합니다.
 
    ```sh
-   git tag v1.5.0
+   git tag v1.5.1
    git push origin main --tags
    ```
 

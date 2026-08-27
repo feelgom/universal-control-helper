@@ -8,9 +8,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var transport: RelayTransport?
     private var sourceClient: SourceClient?
     private var inputSourceRelay: InputSourceRelay?
+    private var physicalCapsLockMonitor: PhysicalCapsLockMonitor?
     private var settingsController: SettingsWindowController?
     private var updaterReadinessObservation: NSKeyValueObservation?
     private var connectionStatus = "시작 중"
+    private var inputMonitoringReady = false
     private lazy var updaterController = SPUStandardUpdaterController(
         startingUpdater: true,
         updaterDelegate: nil,
@@ -55,9 +57,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         sourceClient = nil
         inputSourceRelay?.stop()
         inputSourceRelay = nil
+        physicalCapsLockMonitor?.stop()
+        physicalCapsLockMonitor = nil
+        inputMonitoringReady = preferences.role == .target
 
         guard preferences.helperEnabled else {
             connectionStatus = "꺼짐"
+            inputMonitoringReady = false
             refreshInterface()
             return
         }
@@ -66,7 +72,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         case .source:
             let client = SourceClient { [weak self] in self?.preferences.pairingCode ?? "" }
             let relay = InputSourceRelay()
+            let physicalMonitor = PhysicalCapsLockMonitor()
             relay.send = { [weak client] state in client?.synchronizeInputSource(state) }
+            physicalMonitor.onCapsLockPressed = { [weak client] in client?.toggleInputSource() }
             client.authenticationDidComplete = { [weak relay] peerProtocolVersion in
                 if peerProtocolVersion >= RelayProtocol.currentVersion {
                     relay?.synchronizeCurrentState()
@@ -78,9 +86,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
             sourceClient = client
             inputSourceRelay = relay
+            physicalCapsLockMonitor = physicalMonitor
             transport = client
             client.start()
             relay.start()
+            inputMonitoringReady = physicalMonitor.start()
 
         case .target:
             let server = TargetServer { [weak self] in self?.preferences.pairingCode ?? "" }
@@ -96,11 +106,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         refreshInterface()
     }
 
+    private var displayedConnectionStatus: String {
+        if !preferences.helperEnabled {
+            return "꺼짐"
+        }
+        if preferences.role == .source, !inputMonitoringReady {
+            return "입력 모니터링 권한 필요"
+        }
+        return connectionStatus
+    }
+
     private var settingsSnapshot: SettingsSnapshot {
         SettingsSnapshot(
             role: preferences.role,
             pairingCode: preferences.pairingCode,
-            connectionStatus: preferences.helperEnabled ? connectionStatus : "꺼짐",
+            connectionStatus: displayedConnectionStatus,
+            inputMonitoringReady: inputMonitoringReady,
             helperEnabled: preferences.helperEnabled,
             currentVersion: displayedVersion,
             canCheckForUpdates: updaterController.updater.canCheckForUpdates,
@@ -217,6 +238,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         return code
     }
 
+    private func refreshInputMonitoring() -> Bool {
+        guard preferences.role == .source, let physicalCapsLockMonitor else {
+            inputMonitoringReady = preferences.role == .target
+            refreshInterface()
+            return inputMonitoringReady
+        }
+
+        physicalCapsLockMonitor.stop()
+        inputMonitoringReady = physicalCapsLockMonitor.start()
+        refreshInterface()
+        return inputMonitoringReady
+    }
+
     private func makeSettingsController() -> SettingsWindowController {
         let controller = SettingsWindowController()
         controller.roleDidChange = { [weak self] role in self?.setRole(role) }
@@ -225,6 +259,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         controller.pairingCodeRegenerationRequested = { [weak self] in
             self?.regeneratePairingCode() ?? ""
+        }
+        controller.permissionRefreshRequested = { [weak self] in
+            self?.refreshInputMonitoring() ?? false
         }
         controller.helperEnabledDidChange = { [weak self] enabled in
             self?.setHelperEnabled(enabled)
@@ -257,6 +294,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         updaterController.checkForUpdates(nil)
     }
 
+    func applicationDidBecomeActive(_ notification: Notification) {
+        if statusItem != nil, preferences.role == .source, !inputMonitoringReady {
+            _ = refreshInputMonitoring()
+        }
+    }
+
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         showSettings()
         return true
@@ -267,6 +310,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        physicalCapsLockMonitor?.stop()
         inputSourceRelay?.stop()
         transport?.stop()
     }

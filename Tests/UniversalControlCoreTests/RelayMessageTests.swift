@@ -32,15 +32,9 @@ final class RelayMessageTests: XCTestCase {
         XCTAssertEqual(decoded.token, "123456")
     }
 
-    func testInputSourceMessageFallsBackForLegacyPeer() {
-        XCTAssertEqual(
-            RelayProtocol.inputSourceMessage(.korean, token: "123456", peerProtocolVersion: 1),
-            .toggleInputSource(token: "123456")
-        )
-        XCTAssertEqual(
-            RelayProtocol.inputSourceMessage(.abc, token: "123456", peerProtocolVersion: 2),
-            .setInputSource(.abc, token: "123456")
-        )
+    func testLegacyPeerDoesNotReceiveDuplicateStateSynchronization() {
+        XCTAssertFalse(RelayProtocol.supportsExplicitInputSourceState(1))
+        XCTAssertTrue(RelayProtocol.supportsExplicitInputSourceState(2))
     }
 
     func testFramerHandlesSplitAndCombinedPackets() throws {

@@ -28,7 +28,7 @@
 
 ---
 
-macOS Universal Control로 다른 Mac을 조작할 때 Caps Lock을 눌러도 한/영 전환이 되지 않는 경우가 있습니다. Universal Control Helper는 Source Mac의 `ABC ↔ 두벌식` 변경을 감지하고, Target Mac의 입력 소스를 같은 상태로 맞춥니다. 키보드 이벤트를 직접 읽지 않으므로 입력 모니터링 권한이 필요하지 않습니다.
+macOS Universal Control로 다른 Mac을 조작할 때 Caps Lock을 눌러도 한/영 전환이 되지 않는 경우가 있습니다. Universal Control Helper는 Source Mac의 물리 Caps Lock을 감지해 Target으로 전달하고, `ABC ↔ 두벌식` 상태도 함께 맞춥니다. Caps Lock 이외의 일반 키 입력은 처리하지 않습니다.
 
 > Apple과 제휴하거나 Apple이 보증한 제품이 아닌 비공식 오픈 소스 유틸리티입니다.
 
@@ -71,31 +71,31 @@ bash /tmp/universal-control-helper-install.sh --install-dir "$HOME/Applications"
 
 | Mac | 역할 | 필요한 권한 | 할 일 |
 | --- | --- | --- | --- |
-| 키보드가 연결된 Mac | **키보드 Mac (Source)** | 로컬 네트워크 | 자동 생성된 코드 확인 |
+| 키보드가 연결된 Mac | **키보드 Mac (Source)** | 입력 모니터링, 로컬 네트워크 | 자동 생성된 코드 확인 |
 | 조작할 다른 Mac | **대상 Mac (Target)** | 로컬 네트워크 | Source의 코드 입력 |
 
 1. 두 Mac을 같은 로컬 네트워크에 연결하고 Universal Control을 활성화합니다.
 2. 메뉴 막대의 **설정…** 또는 `Command-,`로 설정창을 엽니다.
 3. 키보드가 연결된 Mac은 Source, 다른 Mac은 Target으로 선택합니다.
 4. Source에 자동 생성된 **페어링 코드**를 Target에 입력합니다.
-5. 첫 연결 때 두 Mac에 나타나는 로컬 네트워크 요청을 허용합니다.
+5. 첫 연결 때 두 Mac에 나타나는 로컬 네트워크 요청을 허용하고, Source에서만 입력 모니터링을 허용합니다.
 
-설정창은 일반, 연결, 소프트웨어 업데이트 순서로 구성됩니다. 창이 열려 있을 때 `Command-W`를 누르면 메뉴 막대 앱은 계속 실행되지만 `Command-Tab` 목록에서는 숨겨집니다. 다시 열 때는 메뉴 막대의 **설정…**을 사용합니다. 로컬 네트워크 권한은 첫 연결 때 macOS가 자동으로 요청하므로 별도의 설정 항목으로 표시하지 않습니다. 입력 모니터링과 접근성 권한은 필요하지 않습니다.
+설정창은 일반, 연결, Source 전용 입력 권한, 소프트웨어 업데이트 순서로 구성됩니다. 창이 열려 있을 때 `Command-W`를 누르면 메뉴 막대 앱은 계속 실행되지만 `Command-Tab` 목록에서는 숨겨집니다. 다시 열 때는 메뉴 막대의 **설정…**을 사용합니다. 로컬 네트워크 권한은 첫 연결 때 macOS가 자동으로 요청하므로 별도의 설정 항목으로 표시하지 않습니다. 접근성 권한은 필요하지 않습니다.
 
 메뉴 막대 메뉴에는 전체 기능 스위치, 설정, 종료만 표시합니다. 역할, 페어링 코드, 연결과 업데이트는 설정창에서 관리합니다. 상단 스위치나 설정창의 **Universal Control Helper 사용**을 끄면 입력 소스 동기화와 두 Mac 간 연결이 함께 일시 중지됩니다. **Mac에 로그인할 때 자동으로 실행**을 켜면 별도 헬퍼 없이 macOS 로그인 항목으로 등록됩니다.
 
 ## 어떻게 동작하나요?
 
 ```text
-Source Mac의 ABC/두벌식 변경
-             │
-             ▼
+물리 Caps Lock + ABC/두벌식 상태
+              │
+              ▼
 Source Mac ── Bonjour / 같은 LAN ──▶ Target Mac
- 상태 확인        6자리 코드 확인        같은 상태 적용
+ Caps Lock 감지    6자리 코드 확인        한/영 전환
 ```
 
-- Source는 키보드 이벤트 대신 macOS가 제공하는 입력 소스 변경 알림만 관찰합니다.
-- Caps Lock, 입력 메뉴 또는 다른 단축키로 바꾼 ABC/두벌식 상태가 모두 동기화됩니다.
+- Source는 물리 키보드의 Caps Lock 누름만 감지하고 키 입력을 차단하지 않습니다.
+- 새 버전끼리는 입력 메뉴 또는 다른 단축키로 바꾼 ABC/두벌식 상태도 동기화됩니다.
 - Bonjour로 Target을 자동 검색하고, 코드가 일치한 연결만 처리합니다.
 - Target은 현재 입력 소스를 확인한 뒤 macOS API로 ABC와 두벌식을 직접 전환합니다.
 - 일반 키 입력, 입력한 텍스트, 클립보드, 마우스 이벤트는 수집하거나 전송하지 않습니다.
@@ -113,7 +113,7 @@ Source Mac ── Bonjour / 같은 LAN ──▶ Target Mac
 
 앱은 [Sparkle](https://sparkle-project.org/)로 GitHub Release의 EdDSA 서명 업데이트를 확인합니다. 설정창의 **소프트웨어 업데이트** 섹션에서 현재 버전을 보거나 **업데이트 확인…**을 선택할 수 있으며, 기본 주기 확인도 지원합니다.
 
-v1.5.0부터 입력 모니터링 권한을 사용하지 않으므로 앱 업데이트 후 해당 권한을 다시 허용할 필요가 없습니다. 임시 서명 빌드에서는 Gatekeeper 안내나 로컬 네트워크 요청이 다시 나타날 가능성을 완전히 배제할 수 없으며, Developer ID를 도입하면 이 앱의 서명 신원도 업데이트 간에 유지됩니다.
+v1.5.1은 Universal Control이 키보드를 Target으로 전달하는 동안에도 물리 Caps Lock을 감지하기 위해 Source에서 입력 모니터링 권한을 사용합니다. Target에는 이 권한이 필요하지 않습니다. Developer ID가 없는 임시 서명 빌드에서는 업데이트 후 macOS가 권한을 다시 요청할 가능성을 완전히 배제할 수 없으며, Developer ID를 도입하면 앱의 서명 신원을 업데이트 간에 유지할 수 있습니다.
 
 ## 개발
 

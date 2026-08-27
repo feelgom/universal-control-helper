@@ -5,6 +5,7 @@ struct SettingsSnapshot {
     let role: ComputerRole
     let pairingCode: String
     let connectionStatus: String
+    let inputMonitoringReady: Bool
     let helperEnabled: Bool
     let currentVersion: String
     let canCheckForUpdates: Bool
@@ -15,6 +16,8 @@ final class SettingsViewModel: ObservableObject {
     @Published private(set) var role: ComputerRole = .source
     @Published var pairingCode = ""
     @Published private(set) var connectionStatus = "시작 중"
+    @Published private(set) var inputMonitoring = PermissionState.notDetermined
+    @Published private(set) var inputMonitoringReady = false
     @Published private(set) var helperEnabled = true
     @Published private(set) var currentVersion = "-"
     @Published private(set) var canCheckForUpdates = false
@@ -28,6 +31,7 @@ final class SettingsViewModel: ObservableObject {
     var roleDidChange: ((ComputerRole) -> Void)?
     var pairingCodeDidChange: ((String) -> Bool)?
     var pairingCodeRegenerationRequested: (() -> String)?
+    var permissionRefreshRequested: (() -> Bool)?
     var helperEnabledDidChange: ((Bool) -> Void)?
     var updateCheckRequested: (() -> Void)?
     var launchAtLoginDidChange: ((Bool) -> LaunchAtLoginChangeResult)?
@@ -38,6 +42,8 @@ final class SettingsViewModel: ObservableObject {
             pairingCode = snapshot.pairingCode
         }
         connectionStatus = snapshot.connectionStatus
+        inputMonitoringReady = snapshot.inputMonitoringReady
+        inputMonitoring = AppPermissions.inputMonitoring
         helperEnabled = snapshot.helperEnabled
         currentVersion = snapshot.currentVersion
         canCheckForUpdates = snapshot.canCheckForUpdates
@@ -83,6 +89,13 @@ final class SettingsViewModel: ObservableObject {
         updateCheckRequested?()
     }
 
+    func refreshInputMonitoring() {
+        if let permissionRefreshRequested {
+            inputMonitoringReady = permissionRefreshRequested()
+        }
+        inputMonitoring = AppPermissions.inputMonitoring
+    }
+
     func setHelperEnabled(_ enabled: Bool) {
         helperEnabled = enabled
         helperEnabledDidChange?(enabled)
@@ -111,6 +124,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     var roleDidChange: ((ComputerRole) -> Void)?
     var pairingCodeDidChange: ((String) -> Bool)?
     var pairingCodeRegenerationRequested: (() -> String)?
+    var permissionRefreshRequested: (() -> Bool)?
     var helperEnabledDidChange: ((Bool) -> Void)?
     var updateCheckRequested: (() -> Void)?
     var launchAtLoginDidChange: ((Bool) -> LaunchAtLoginChangeResult)?
@@ -124,19 +138,25 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         let window = NSWindow(contentViewController: hostingController)
         window.title = "Universal Control Helper 설정"
         window.styleMask = [.titled, .closable, .miniaturizable]
-        window.setContentSize(NSSize(width: 600, height: 590))
-        window.minSize = NSSize(width: 560, height: 550)
+        window.setContentSize(NSSize(width: 600, height: 720))
+        window.minSize = NSSize(width: 560, height: 660)
         window.isReleasedWhenClosed = false
         window.center()
 
         super.init(window: window)
         window.delegate = self
-        model.roleDidChange = { [weak self] role in self?.roleDidChange?(role) }
+        model.roleDidChange = { [weak self] role in
+            self?.resize(for: role)
+            self?.roleDidChange?(role)
+        }
         model.pairingCodeDidChange = { [weak self] code in
             self?.pairingCodeDidChange?(code) ?? false
         }
         model.pairingCodeRegenerationRequested = { [weak self] in
             self?.pairingCodeRegenerationRequested?() ?? ""
+        }
+        model.permissionRefreshRequested = { [weak self] in
+            self?.permissionRefreshRequested?() ?? false
         }
         model.helperEnabledDidChange = { [weak self] enabled in
             self?.helperEnabledDidChange?(enabled)
@@ -157,6 +177,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
 
     func present(snapshot: SettingsSnapshot) {
         model.update(snapshot: snapshot)
+        resize(for: snapshot.role)
         showWindow(nil)
         NSApp.activate(ignoringOtherApps: true)
         window?.makeKeyAndOrderFront(nil)
@@ -169,6 +190,12 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     func windowWillClose(_ notification: Notification) {
         windowDidClose?()
     }
+
+    private func resize(for role: ComputerRole) {
+        let height: CGFloat = role == .source ? 720 : 590
+        window?.minSize = NSSize(width: 560, height: role == .source ? 660 : 550)
+        window?.setContentSize(NSSize(width: 600, height: height))
+    }
 }
 
 private struct SettingsView: View {
@@ -179,11 +206,19 @@ private struct SettingsView: View {
             header
             generalSection
             connectionSection
+            if model.role == .source {
+                inputPermissionSection
+            }
             softwareUpdateSection
             Spacer(minLength: 0)
         }
         .padding(24)
-        .frame(minWidth: 560, idealWidth: 600, minHeight: 550, idealHeight: 590)
+        .frame(
+            minWidth: 560,
+            idealWidth: 600,
+            minHeight: model.role == .source ? 660 : 550,
+            idealHeight: model.role == .source ? 720 : 590
+        )
     }
 
     private var header: some View {
@@ -334,6 +369,44 @@ private struct SettingsView: View {
         }
     }
 
+    private var inputPermissionSection: some View {
+        GroupBox("입력 권한 · Source만 필요") {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: 12) {
+                    Circle()
+                        .fill(model.inputMonitoringReady ? Color.green : Color.red)
+                        .frame(width: 9, height: 9)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("입력 모니터링")
+                            .fontWeight(.medium)
+                        Text(inputMonitoringDescription)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    Button("설정 열기") {
+                        AppPermissions.openInputMonitoringSettings()
+                    }
+                    .accessibilityLabel("입력 모니터링 설정 열기")
+                }
+
+                HStack {
+                    Text("기존 항목의 스위치가 켜져 있어도 미허용이면 한 번 껐다가 다시 켜 주세요.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Button {
+                        model.refreshInputMonitoring()
+                    } label: {
+                        Label("권한 다시 확인", systemImage: "arrow.clockwise")
+                    }
+                    .controlSize(.small)
+                }
+            }
+            .padding(8)
+        }
+    }
+
     private var softwareUpdateSection: some View {
         GroupBox("소프트웨어 업데이트") {
             LabeledContent("현재 버전") {
@@ -365,10 +438,24 @@ private struct SettingsView: View {
         return .orange
     }
 
+    private var inputMonitoringDescription: String {
+        if model.inputMonitoringReady {
+            return "사용 가능 · 물리 Caps Lock 감지 중"
+        }
+        switch model.inputMonitoring {
+        case .granted:
+            return "권한은 허용됐지만 감지를 시작하지 못했습니다. 앱을 다시 실행해 주세요."
+        case .denied:
+            return "현재 빌드에는 미허용 · 설정 스위치를 껐다 켠 뒤 다시 확인하세요."
+        case .notDetermined:
+            return "아직 허용되지 않음 · 설정에서 입력 모니터링을 허용하세요."
+        }
+    }
+
     private var roleExplanation: String {
         switch model.role {
         case .source:
-            return "Source의 ABC/두벌식 변경을 Target에 자동으로 동기화합니다."
+            return "물리 Caps Lock을 Target에 전달하고 ABC/두벌식 상태도 자동으로 맞춥니다."
         case .target:
             return "Source에서 선택한 ABC/두벌식 상태를 그대로 적용합니다."
         }

@@ -60,12 +60,19 @@ final class SourceClient: RelayTransport {
     func synchronizeInputSource(_ inputSource: InputSourceState) {
         queue.async { [weak self] in
             guard let self, self.authenticated, let connection = self.connection else { return }
-            let message = RelayProtocol.inputSourceMessage(
-                inputSource,
-                token: self.tokenProvider(),
-                peerProtocolVersion: self.peerProtocolVersion
-            )
-            self.send(message, over: connection)
+            // Legacy peers already receive the physical Caps Lock toggle. Sending the
+            // observed state as another legacy toggle would cancel the first one.
+            guard RelayProtocol.supportsExplicitInputSourceState(self.peerProtocolVersion) else {
+                return
+            }
+            self.send(.setInputSource(inputSource, token: self.tokenProvider()), over: connection)
+        }
+    }
+
+    func toggleInputSource() {
+        queue.async { [weak self] in
+            guard let self, self.authenticated, let connection = self.connection else { return }
+            self.send(.toggleInputSource(token: self.tokenProvider()), over: connection)
         }
     }
 
