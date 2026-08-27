@@ -13,6 +13,7 @@ jobs:
       - name: Validate installer and README assets
         run: |
           bash -n scripts/install.sh
+          zsh -n scripts/build-app.sh scripts/notarize-app.sh scripts/verify-release.sh
           scripts/install.sh --help
           xmllint --noout .github/assets/hero.svg
       - name: Test

@@ -8,6 +8,7 @@ PLIST_VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' 
 APP_VERSION="${APP_VERSION:-$PLIST_VERSION}"
 BUILD_NUMBER="${BUILD_NUMBER:-$APP_VERSION}"
 CODE_SIGN_IDENTITY="${CODE_SIGN_IDENTITY:--}"
+CODE_SIGN_KEYCHAIN="${CODE_SIGN_KEYCHAIN:-}"
 
 cd "$PROJECT_DIR"
 
@@ -50,7 +51,23 @@ install_name_tool -add_rpath "@executable_path/../Frameworks" "$APP_DIR/Contents
 /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $APP_VERSION" "$APP_DIR/Contents/Info.plist"
 /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUMBER" "$APP_DIR/Contents/Info.plist"
 
-codesign --force --deep --sign "$CODE_SIGN_IDENTITY" "$APP_DIR/Contents/Frameworks/Sparkle.framework"
-codesign --force --deep --sign "$CODE_SIGN_IDENTITY" "$APP_DIR"
+SIGN_ARGS=(--force --sign "$CODE_SIGN_IDENTITY")
+if [[ "$CODE_SIGN_IDENTITY" != "-" ]]; then
+  SIGN_ARGS+=(--options runtime --timestamp)
+fi
+if [[ -n "$CODE_SIGN_KEYCHAIN" ]]; then
+  SIGN_ARGS+=(--keychain "$CODE_SIGN_KEYCHAIN")
+fi
+
+# Sparkle contains nested helper apps and XPC services. Sign them from the
+# inside out, preserving Downloader's entitlement as recommended by Sparkle.
+SPARKLE_CONTENTS="$APP_DIR/Contents/Frameworks/Sparkle.framework/Versions/Current"
+codesign "${SIGN_ARGS[@]}" "$SPARKLE_CONTENTS/XPCServices/Installer.xpc"
+codesign "${SIGN_ARGS[@]}" --preserve-metadata=entitlements \
+  "$SPARKLE_CONTENTS/XPCServices/Downloader.xpc"
+codesign "${SIGN_ARGS[@]}" "$SPARKLE_CONTENTS/Autoupdate"
+codesign "${SIGN_ARGS[@]}" "$SPARKLE_CONTENTS/Updater.app"
+codesign "${SIGN_ARGS[@]}" "$APP_DIR/Contents/Frameworks/Sparkle.framework"
+codesign "${SIGN_ARGS[@]}" "$APP_DIR"
 
 echo "$APP_DIR"

@@ -63,7 +63,7 @@ bash /tmp/universal-control-helper-install.sh --install-dir "$HOME/Applications"
 [최신 Release](https://github.com/feelgom/universal-control-helper/releases/latest)에서 `UniversalControlHelper-macOS-universal.zip`을 받아 압축을 풀고 `Universal Control Helper.app`을 `/Applications`로 옮깁니다.
 
 > [!IMPORTANT]
-> 현재 공개 빌드는 Apple Developer ID 서명·공증 없이 배포됩니다. 첫 실행 시 Finder에서 앱을 Control-클릭한 뒤 **열기**를 선택해야 할 수 있습니다.
+> 현재 공개된 v1.4.1까지는 Apple Developer ID 서명·공증 없이 배포되었습니다. Developer ID 자동 서명·공증 파이프라인은 준비되었으며, 자격 증명이 등록된 다음 릴리즈부터 Gatekeeper가 검증한 앱을 배포합니다.
 
 ## 사용법
 
@@ -113,7 +113,7 @@ Source Mac ── Bonjour / 같은 LAN ──▶ Target Mac
 
 앱은 [Sparkle](https://sparkle-project.org/)로 GitHub Release의 EdDSA 서명 업데이트를 확인합니다. 메뉴 막대나 설정창의 **업데이트 확인…**을 선택하거나 기본 주기 확인을 이용할 수 있습니다. 설정창의 일반 섹션에서 현재 설치된 버전도 확인할 수 있습니다.
 
-Developer ID가 없는 현재 공개 빌드는 버전이 바뀌면 macOS가 새 앱으로 인식해 Source Mac의 입력 모니터링 권한을 다시 요청할 수 있습니다. 시스템 설정의 스위치가 켜져 있는데 **현재 앱에는 미허용**으로 표시되면 **권한 초기화…**로 이 앱의 오래된 항목만 정리한 뒤 현재 앱을 다시 허용하세요. **권한 다시 확인**은 실제 HID 모니터를 다시 열고, macOS가 재실행을 요구하는 경우 앱을 자동으로 다시 시작합니다.
+Developer ID 이전 빌드에서 최초 서명 버전으로 업데이트할 때는 macOS가 새 서명 주체로 인식해 Source Mac의 입력 모니터링 권한을 한 번 다시 요청할 수 있습니다. 그 이후에는 동일한 Developer ID, Team ID와 Bundle ID를 유지하므로 일반 업데이트에서 권한이 유지됩니다. 시스템 설정의 스위치가 켜져 있는데 **현재 앱에는 미허용**으로 표시되면 **권한 초기화…**로 이 앱의 오래된 항목만 정리한 뒤 현재 앱을 다시 허용하세요. **권한 다시 확인**은 실제 HID 모니터를 다시 열고, macOS가 재실행을 요구하는 경우 앱을 자동으로 다시 시작합니다.
 
 권한 확인은 `IOHIDCheckAccess`, Core Graphics 사전 확인과 실제 HID 모니터 시작 결과를 함께 사용합니다. 설정 목록의 모양이 아니라 현재 실행 중인 앱이 실제로 Caps Lock을 감지할 수 있는지를 기준으로 표시합니다.
 
@@ -125,7 +125,7 @@ BUILD_UNIVERSAL=1 ./scripts/build-app.sh
 REQUIRE_UNIVERSAL=1 ./scripts/verify-release.sh
 ```
 
-`v*` 태그를 푸시하면 GitHub Actions가 테스트, Universal Binary 빌드, Sparkle 서명, 앱캐스트 생성과 Release 업로드를 수행합니다. 자세한 절차는 [RELEASING.md](RELEASING.md)를 참고하세요.
+`v*` 태그를 푸시하면 GitHub Actions가 테스트, Universal Binary 빌드, Developer ID 서명, Apple 공증, Sparkle 서명, 앱캐스트 생성과 Release 업로드를 수행합니다. 자격 증명과 사전 검사 절차는 [RELEASING.md](RELEASING.md)를 참고하세요.
 
 ## Star History
 
