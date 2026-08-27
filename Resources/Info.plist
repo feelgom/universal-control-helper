@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>ko</string>
+    <key>CFBundleExecutable</key>
+    <string>UniInputFix</string>
+    <key>CFBundleIdentifier</key>
+    <string>io.yoonsungji.UniInputFix</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundleName</key>
+    <string>UniInput Fix</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.1.0</string>
+    <key>CFBundleVersion</key>
+	<string>1.1.0</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>13.0</string>
+    <key>LSUIElement</key>
+    <true/>
+    <key>NSLocalNetworkUsageDescription</key>
+    <string>Universal Control의 Caps Lock 입력 소스 전환 신호를 사용자의 다른 Mac으로 전달합니다.</string>
+    <key>NSBonjourServices</key>
+    <array>
+        <string>_uniinputfix._tcp</string>
+    </array>
+    <key>SUEnableAutomaticChecks</key>
+    <true/>
+    <key>SUFeedURL</key>
+    <string>https://github.com/feelgom/UniInputFix/releases/latest/download/appcast.xml</string>
+    <key>SUPublicEDKey</key>
+    <string>H7ltm2oeO1VUiPvRtVgDExR7oda19ORxCluyp+rb438=</string>
+</dict>
+</plist>

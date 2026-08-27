@@ -1,0 +1,64 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-15
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate tag and version
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          PLIST_VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' Resources/Info.plist)"
+          test "$VERSION" = "$PLIST_VERSION"
+          test -n "$SPARKLE_PRIVATE_KEY"
+
+      - name: Test
+        run: swift test -Xswiftc -warnings-as-errors
+
+      - name: Build Universal app
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          APP_VERSION="$VERSION" BUILD_NUMBER="$VERSION" BUILD_UNIVERSAL=1 ./scripts/build-app.sh
+          REQUIRE_UNIVERSAL=1 ./scripts/verify-release.sh
+
+      - name: Create signed Sparkle feed
+        run: |
+          mkdir -p release-feed
+          ditto -c -k --sequesterRsrc --keepParent dist/UniInputFix.app release-feed/UniInputFix-macOS-universal.zip
+          cp RELEASE_NOTES.md release-feed/UniInputFix-macOS-universal.md
+          printf '%s' "$SPARKLE_PRIVATE_KEY" | .build/artifacts/sparkle/Sparkle/bin/generate_appcast \
+            --ed-key-file - \
+            --download-url-prefix "https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}/" \
+            --link "https://github.com/${GITHUB_REPOSITORY}" \
+            --embed-release-notes \
+            release-feed
+          cp release-feed/UniInputFix-macOS-universal.zip dist/UniInputFix-macOS-universal.zip
+          cp release-feed/appcast.xml dist/appcast.xml
+          cd dist
+          shasum -a 256 UniInputFix-macOS-universal.zip > SHA256SUMS
+
+      - name: Verify Sparkle signature
+        run: |
+          grep -q 'sparkle:edSignature=' dist/appcast.xml
+          grep -q "${GITHUB_REF_NAME#v}" dist/appcast.xml
+
+      - name: Publish GitHub Release
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            dist/UniInputFix-macOS-universal.zip \
+            dist/appcast.xml \
+            dist/SHA256SUMS \
+            --title "UniInput Fix ${GITHUB_REF_NAME#v}" \
+            --notes-file RELEASE_NOTES.md
