@@ -178,42 +178,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(header)
         menu.addItem(.separator())
 
-        let source = NSMenuItem(title: "키보드 Mac (Source)", action: #selector(selectSource), keyEquivalent: "")
-        source.target = self
-        source.state = preferences.role == .source ? .on : .off
-        menu.addItem(source)
-
-        let target = NSMenuItem(title: "대상 Mac (Target)", action: #selector(selectTarget), keyEquivalent: "")
-        target.target = self
-        target.state = preferences.role == .target ? .on : .off
-        menu.addItem(target)
-        menu.addItem(.separator())
-
-        let status = NSMenuItem(title: displayedConnectionStatus, action: nil, keyEquivalent: "")
-        status.isEnabled = false
-        menu.addItem(status)
-
-        let pairing = NSMenuItem(
-            title: "페어링 코드: \(preferences.pairingCode)…",
-            action: #selector(showPairingSettings),
-            keyEquivalent: ""
-        )
-        pairing.target = self
-        menu.addItem(pairing)
-        menu.addItem(.separator())
-
         let settings = NSMenuItem(title: "설정…", action: #selector(showSettings), keyEquivalent: ",")
         settings.target = self
         menu.addItem(settings)
-
-        let updates = NSMenuItem(title: "업데이트 확인…", action: #selector(checkForUpdates), keyEquivalent: "")
-        updates.target = self
-        updates.isEnabled = updaterController.updater.canCheckForUpdates
-        menu.addItem(updates)
-
-        let about = NSMenuItem(title: "사용 방법", action: #selector(showInstructions), keyEquivalent: "")
-        about.target = self
-        menu.addItem(about)
         menu.addItem(.separator())
 
         let quitItem = NSMenuItem(
@@ -224,14 +191,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         quitItem.target = self
         menu.addItem(quitItem)
         statusItem.menu = menu
-    }
-
-    @objc private func selectSource() {
-        setRole(.source)
-    }
-
-    @objc private func selectTarget() {
-        setRole(.target)
     }
 
     private func setRole(_ role: ComputerRole) {
@@ -311,6 +270,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self?.refreshInterface()
             return result
         }
+        controller.windowDidClose = {
+            NSApp.setActivationPolicy(.accessory)
+        }
         return controller
     }
 
@@ -359,6 +321,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func showSettings() {
+        NSApp.setActivationPolicy(.regular)
         if settingsController == nil {
             settingsController = makeSettingsController()
         }
@@ -369,22 +332,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         settingsController?.window?.performClose(nil)
     }
 
-    @objc private func showPairingSettings() {
-        if settingsController == nil {
-            settingsController = makeSettingsController()
-        }
-        settingsController?.present(snapshot: settingsSnapshot, focusPairingCode: true)
-    }
-
-    @objc private func checkForUpdates() {
+    private func checkForUpdates() {
         updaterController.checkForUpdates(nil)
-    }
-
-    @objc private func showInstructions() {
-        showInfo(
-            title: "Universal Control Helper 사용 방법",
-            message: "1. ⌘, 또는 메뉴의 설정을 엽니다.\n2. 키보드가 연결된 Mac은 Source, 다른 Mac은 Target으로 설정합니다.\n3. Source에 자동 생성된 6자리 코드를 Target에 입력합니다.\n4. Source에서 입력 모니터링을 허용합니다.\n\n이후 Source에서 Caps Lock을 누르면 로컬 한/영 전환은 유지되고 Target의 한국어/ABC 입력 소스도 함께 전환됩니다."
-        )
     }
 
     private func showInfo(title: String, message: String) {
@@ -399,9 +348,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidBecomeActive(_ notification: Notification) {
         if statusItem != nil {
             _ = refreshInputMonitoring()
-            if settingsController?.window?.isVisible != true {
-                showSettings()
-            }
         }
     }
 
@@ -423,7 +369,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 private final class StatusMenuHeaderView: NSView {
     var enabledDidChange: ((Bool) -> Void)?
 
-    private let enabledSwitch = NSSwitch()
+    private let enabledSwitch = PersistentTintSwitch()
 
     init(isEnabled: Bool, status: String) {
         super.init(frame: NSRect(x: 0, y: 0, width: 310, height: 64))
@@ -446,9 +392,10 @@ private final class StatusMenuHeaderView: NSView {
         labels.spacing = 2
         labels.translatesAutoresizingMaskIntoConstraints = false
 
-        enabledSwitch.state = isEnabled ? .on : .off
+        enabledSwitch.isOn = isEnabled
         enabledSwitch.target = self
         enabledSwitch.action = #selector(switchChanged)
+        enabledSwitch.setAccessibilityLabel("Universal Control Helper 사용")
         enabledSwitch.translatesAutoresizingMaskIntoConstraints = false
 
         addSubview(iconView)
@@ -474,6 +421,78 @@ private final class StatusMenuHeaderView: NSView {
     }
 
     @objc private func switchChanged() {
-        enabledDidChange?(enabledSwitch.state == .on)
+        enabledDidChange?(enabledSwitch.isOn)
+    }
+}
+
+private final class PersistentTintSwitch: NSControl {
+    var isOn = false {
+        didSet {
+            setAccessibilityValue(isOn)
+            needsDisplay = true
+        }
+    }
+
+    override var intrinsicContentSize: NSSize {
+        NSSize(width: 46, height: 26)
+    }
+
+    override init(frame frameRect: NSRect) {
+        super.init(frame: frameRect)
+        setAccessibilityRole(.checkBox)
+        setAccessibilityValue(false)
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override func draw(_ dirtyRect: NSRect) {
+        super.draw(dirtyRect)
+
+        let trackRect = bounds.insetBy(dx: 1, dy: 1)
+        let track = NSBezierPath(
+            roundedRect: trackRect,
+            xRadius: trackRect.height / 2,
+            yRadius: trackRect.height / 2
+        )
+        let trackColor: NSColor
+        if isOn {
+            trackColor = .controlAccentColor
+        } else {
+            trackColor = .tertiaryLabelColor.withAlphaComponent(0.45)
+        }
+        trackColor.setFill()
+        track.fill()
+
+        let thumbDiameter = trackRect.height - 4
+        let thumbX = isOn
+            ? trackRect.maxX - thumbDiameter - 2
+            : trackRect.minX + 2
+        let thumbRect = NSRect(
+            x: thumbX,
+            y: trackRect.minY + 2,
+            width: thumbDiameter,
+            height: thumbDiameter
+        )
+        NSColor.white.setFill()
+        NSBezierPath(ovalIn: thumbRect).fill()
+    }
+
+    override func mouseDown(with event: NSEvent) {
+        guard isEnabled else { return }
+        toggleAndSendAction()
+    }
+
+    override func accessibilityPerformPress() -> Bool {
+        guard isEnabled else { return false }
+        toggleAndSendAction()
+        return true
+    }
+
+    private func toggleAndSendAction() {
+        isOn.toggle()
+        sendAction(action, to: target)
     }
 }

@@ -133,6 +133,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     var helperEnabledDidChange: ((Bool) -> Void)?
     var updateCheckRequested: (() -> Void)?
     var launchAtLoginDidChange: ((Bool) -> LaunchAtLoginChangeResult)?
+    var windowDidClose: (() -> Void)?
 
     private let model = SettingsViewModel()
 
@@ -142,8 +143,8 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         let window = NSWindow(contentViewController: hostingController)
         window.title = "Universal Control Helper 설정"
         window.styleMask = [.titled, .closable, .miniaturizable]
-        window.setContentSize(NSSize(width: 600, height: 680))
-        window.minSize = NSSize(width: 560, height: 620)
+        window.setContentSize(NSSize(width: 600, height: 720))
+        window.minSize = NSSize(width: 560, height: 660)
         window.isReleasedWhenClosed = false
         window.center()
 
@@ -179,16 +180,12 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         fatalError("init(coder:) has not been implemented")
     }
 
-    func present(snapshot: SettingsSnapshot, focusPairingCode: Bool = false) {
+    func present(snapshot: SettingsSnapshot) {
         model.update(snapshot: snapshot)
         model.refreshPermissions()
         showWindow(nil)
         NSApp.activate(ignoringOtherApps: true)
         window?.makeKeyAndOrderFront(nil)
-
-        if focusPairingCode, snapshot.role == .target {
-            NotificationCenter.default.post(name: .focusPairingCode, object: nil)
-        }
     }
 
     func update(snapshot: SettingsSnapshot) {
@@ -198,27 +195,28 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     func refreshPermissionStatus() {
         model.refreshPermissions()
     }
+
+    func windowWillClose(_ notification: Notification) {
+        windowDidClose?()
+    }
 }
 
 private struct SettingsView: View {
     @ObservedObject var model: SettingsViewModel
-    @FocusState private var pairingCodeFocused: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
             header
+            generalSection
             connectionSection
             if model.role == .source {
                 permissionSection
             }
-            generalSection
+            softwareUpdateSection
             Spacer(minLength: 0)
         }
         .padding(24)
-        .frame(minWidth: 560, idealWidth: 600, minHeight: 620, idealHeight: 680)
-        .onReceive(NotificationCenter.default.publisher(for: .focusPairingCode)) { _ in
-            pairingCodeFocused = true
-        }
+        .frame(minWidth: 560, idealWidth: 600, minHeight: 660, idealHeight: 720)
     }
 
     private var header: some View {
@@ -317,7 +315,6 @@ private struct SettingsView: View {
                     .multilineTextAlignment(.center)
                     .font(.system(.body, design: .monospaced).weight(.medium))
                     .frame(width: 130)
-                    .focused($pairingCodeFocused)
                     .onSubmit { model.applyPairingCode() }
                     .accessibilityLabel("페어링 코드")
                     Button("적용") { model.applyPairingCode() }
@@ -401,22 +398,27 @@ private struct SettingsView: View {
                     }
                 }
 
-                Divider()
+            }
+            .padding(8)
+        }
+    }
 
-                LabeledContent("현재 버전") {
-                    HStack(spacing: 10) {
-                        Text(model.currentVersion)
-                            .foregroundStyle(.secondary)
-                        Button("업데이트 확인…") {
-                            model.checkForUpdates()
-                        }
-                        .disabled(!model.canCheckForUpdates)
-                        .accessibilityLabel("새 버전 확인")
+    private var softwareUpdateSection: some View {
+        GroupBox("소프트웨어 업데이트") {
+            LabeledContent("현재 버전") {
+                HStack(spacing: 10) {
+                    Text(model.currentVersion)
+                        .foregroundStyle(.secondary)
+                    Button("업데이트 확인…") {
+                        model.checkForUpdates()
                     }
+                    .disabled(!model.canCheckForUpdates)
+                    .accessibilityLabel("새 버전 확인")
                 }
             }
             .padding(8)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private func permissionRow(
@@ -490,8 +492,4 @@ private struct SettingsView: View {
             return "Source에서 받은 Caps Lock 신호로 ABC와 두벌식을 전환합니다."
         }
     }
-}
-
-private extension Notification.Name {
-    static let focusPairingCode = Notification.Name("UniversalControlHelper.focusPairingCode")
 }
