@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="440" viewBox="0 0 1200 440" role="img" aria-labelledby="title desc">
+  <title id="title">Universal Control Helper</title>
+  <desc id="desc">Caps Lock input switching bridge between two Macs using Universal Control</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#111827"/>
+      <stop offset="0.52" stop-color="#172554"/>
+      <stop offset="1" stop-color="#312e81"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#60a5fa"/>
+      <stop offset="1" stop-color="#a78bfa"/>
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="1200" height="440" rx="32" fill="url(#bg)"/>
+  <circle cx="1025" cy="40" r="210" fill="#6366f1" opacity="0.10"/>
+  <circle cx="110" cy="420" r="190" fill="#38bdf8" opacity="0.08"/>
+  <rect x="52" y="42" width="112" height="30" rx="15" fill="#ffffff" opacity="0.10"/>
+  <text x="108" y="62" text-anchor="middle" fill="#cbd5e1" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="14" font-weight="600">macOS 13+</text>
+  <text x="600" y="102" text-anchor="middle" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="48" font-weight="750" letter-spacing="-1">Universal Control Helper</text>
+  <text x="600" y="140" text-anchor="middle" fill="#c7d2fe" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="21">두 Mac 사이의 키보드 입력을 다시 자연스럽게.</text>
+  <g transform="translate(125 192)">
+    <rect width="300" height="168" rx="16" fill="#0f172a" stroke="#64748b" stroke-width="3"/>
+    <rect x="15" y="15" width="270" height="138" rx="8" fill="#1e293b"/>
+    <rect x="82" y="56" width="136" height="58" rx="12" fill="#334155" stroke="#60a5fa" stroke-width="2"/>
+    <text x="150" y="80" text-anchor="middle" fill="#93c5fd" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="14" font-weight="700">⇪ CAPS LOCK</text>
+    <text x="150" y="101" text-anchor="middle" fill="#e2e8f0" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="13">physical key</text>
+    <path d="M-22 168h344l-28 18H6z" fill="#64748b"/>
+    <text x="150" y="220" text-anchor="middle" fill="#e2e8f0" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="16" font-weight="650">Source Mac</text>
+  </g>
+  <g transform="translate(775 192)">
+    <rect width="300" height="168" rx="16" fill="#0f172a" stroke="#64748b" stroke-width="3"/>
+    <rect x="15" y="15" width="270" height="138" rx="8" fill="#1e293b"/>
+    <rect x="48" y="58" width="86" height="54" rx="12" fill="#334155" stroke="#a78bfa" stroke-width="2"/>
+    <rect x="166" y="58" width="86" height="54" rx="12" fill="#4c1d95" stroke="#c4b5fd" stroke-width="2"/>
+    <text x="91" y="91" text-anchor="middle" fill="#e2e8f0" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="17" font-weight="700">ABC</text>
+    <text x="209" y="91" text-anchor="middle" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="17" font-weight="700">두벌식</text>
+    <path d="M-22 168h344l-28 18H6z" fill="#64748b"/>
+    <text x="150" y="220" text-anchor="middle" fill="#e2e8f0" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="16" font-weight="650">Target Mac</text>
+  </g>
+  <g filter="url(#glow)">
+    <path d="M455 274h255" fill="none" stroke="url(#accent)" stroke-width="5" stroke-linecap="round" stroke-dasharray="8 12"/>
+    <path d="M700 263l18 11-18 11z" fill="#a78bfa"/>
+    <circle cx="584" cy="274" r="30" fill="#312e81" stroke="#818cf8" stroke-width="2"/>
+    <text x="584" y="280" text-anchor="middle" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="18" font-weight="800">한/영</text>
+  </g>
+  <text x="584" y="329" text-anchor="middle" fill="#94a3b8" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="13">BONJOUR · LOCAL NETWORK</text>
+</svg>

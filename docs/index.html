@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Universal Control Helper — 두 Mac 사이의 Caps Lock 한/영 전환</title>
+<meta name="description" content="Universal Control로 두 Mac을 오갈 때 끊기던 Caps Lock 한/영 전환을 되살리는 무료 오픈소스 macOS 유틸리티." />
+<meta property="og:title" content="Universal Control Helper" />
+<meta property="og:description" content="두 Mac 사이의 키보드 입력을 다시 자연스럽게. Universal Control의 Caps Lock 한/영 전환 문제를 해결합니다." />
+<meta property="og:image" content="https://feelgom.github.io/universal-control-helper/assets/app-icon-512.png" />
+<meta property="og:type" content="website" />
+<link rel="icon" href="assets/favicon-32.png" sizes="32x32" />
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
+<style>
+  :root{
+    --bg:#0a0f1e;
+    --bg-elevated:#111a2e;
+    --bg-card:#141f38;
+    --border:rgba(255,255,255,0.09);
+    --border-strong:rgba(255,255,255,0.16);
+    --text:#eef1fb;
+    --text-dim:#93a0bd;
+    --text-faint:#5f6c8a;
+    --accent-1:#60a5fa;
+    --accent-2:#a78bfa;
+    --accent-grad:linear-gradient(90deg,#60a5fa,#a78bfa);
+    --good:#34d399;
+    --radius:16px;
+    --max:1080px;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Pretendard,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    word-break:keep-all;
+  }
+  img{max-width:100%;display:block;}
+  a{color:inherit;}
+  .wrap{max-width:var(--max);margin:0 auto;padding:0 24px;}
+
+  /* nav */
+  header.nav{
+    position:sticky;top:0;z-index:20;
+    backdrop-filter:saturate(160%) blur(14px);
+    background:rgba(10,15,30,0.72);
+    border-bottom:1px solid var(--border);
+  }
+  .nav-inner{
+    max-width:var(--max);margin:0 auto;padding:14px 24px;
+    display:flex;align-items:center;justify-content:space-between;
+    gap:16px;
+  }
+  .brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:-0.01em;text-decoration:none;font-size:15px;white-space:nowrap;}
+  .brand img{width:26px;height:26px;border-radius:7px;flex:none;}
+  .brand .brand-full{display:inline;}
+  .brand .brand-short{display:none;}
+  nav.links{display:flex;gap:28px;font-size:14px;color:var(--text-dim);white-space:nowrap;}
+  nav.links a{text-decoration:none;transition:color .15s;}
+  nav.links a:hover{color:var(--text);}
+  .nav-cta{
+    font-size:13px;font-weight:600;padding:8px 16px;border-radius:999px;
+    background:var(--bg-card);border:1px solid var(--border-strong);text-decoration:none;
+    white-space:nowrap;flex:none;
+  }
+  .nav-cta:hover{border-color:var(--accent-1);}
+  @media (max-width:860px){
+    nav.links{display:none;}
+  }
+  @media (max-width:480px){
+    .brand .brand-full{display:none;}
+    .brand .brand-short{display:inline;}
+  }
+
+  /* hero */
+  .hero{padding:76px 0 40px;text-align:center;position:relative;overflow:hidden;}
+  .hero::before{
+    content:"";position:absolute;inset:-20% -10% auto -10%;height:520px;
+    background:radial-gradient(60% 60% at 30% 20%,rgba(96,165,250,0.16),transparent 70%),
+               radial-gradient(50% 50% at 75% 10%,rgba(167,139,250,0.14),transparent 70%);
+    pointer-events:none;z-index:-1;
+  }
+  .eyebrow{
+    display:inline-flex;align-items:center;gap:8px;
+    font-size:13px;color:var(--text-dim);
+    border:1px solid var(--border-strong);border-radius:999px;padding:6px 14px;margin-bottom:22px;
+  }
+  .eyebrow b{color:var(--accent-1);font-weight:700;}
+  h1{
+    font-size:clamp(32px,5vw,52px);
+    font-weight:800;letter-spacing:-0.03em;margin:0 0 18px;line-height:1.15;
+  }
+  h1 .grad{
+    background:var(--accent-grad);-webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .sub{
+    font-size:clamp(16px,2vw,19px);color:var(--text-dim);
+    max-width:620px;margin:0 auto 34px;
+  }
+  .cta-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:52px;}
+  .btn{
+    display:inline-flex;align-items:center;gap:8px;
+    font-size:15px;font-weight:650;padding:13px 24px;border-radius:12px;
+    text-decoration:none;border:1px solid transparent;transition:transform .15s,filter .15s;
+  }
+  .btn:hover{transform:translateY(-1px);}
+  .btn-primary{background:var(--accent-grad);color:#0a0f1e;}
+  .btn-primary:hover{filter:brightness(1.08);}
+  .btn-ghost{background:var(--bg-card);border-color:var(--border-strong);color:var(--text);}
+  .btn-ghost:hover{border-color:var(--accent-1);}
+  .btn small{font-weight:500;opacity:0.75;font-size:12px;}
+
+  .hero-art{max-width:880px;margin:0 auto;border-radius:20px;overflow:hidden;border:1px solid var(--border);box-shadow:0 30px 80px -30px rgba(0,0,0,0.6);}
+  .hero-art img{width:100%;}
+
+  .badges{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:26px;}
+  .badges img{height:22px;}
+
+  /* sections */
+  section{padding:88px 0;border-top:1px solid var(--border);}
+  .kicker{font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--accent-1);margin-bottom:12px;}
+  h2{font-size:clamp(24px,3.2vw,34px);font-weight:800;letter-spacing:-0.02em;margin:0 0 14px;}
+  .lede{color:var(--text-dim);font-size:16px;max-width:640px;margin:0 0 44px;}
+  .lede.center{margin-left:auto;margin-right:auto;text-align:center;}
+  .center-head{text-align:center;}
+
+  /* problem steps */
+  .steps{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:48px;}
+  .step{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:20px;}
+  .step .n{
+    width:28px;height:28px;border-radius:8px;background:rgba(96,165,250,0.14);color:var(--accent-1);
+    display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;margin-bottom:14px;
+  }
+  .step p{margin:0;font-size:14px;color:var(--text-dim);}
+
+  .compare{
+    display:grid;grid-template-columns:1fr 1fr;
+    border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;
+  }
+  .compare > div{padding:26px 28px;}
+  .compare .before{background:var(--bg-elevated);}
+  .compare .after{background:linear-gradient(160deg,rgba(96,165,250,0.10),rgba(167,139,250,0.06));}
+  .compare h3{margin:0 0 16px;font-size:13px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:var(--text-faint);}
+  .compare .after h3{color:var(--accent-1);}
+  .compare ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:14px;}
+  .compare li{display:flex;gap:10px;font-size:15px;color:var(--text-dim);}
+  .compare .after li{color:var(--text);}
+  .mark{flex:none;width:20px;height:20px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;margin-top:1px;}
+  .before .mark{background:rgba(148,160,189,0.14);color:var(--text-faint);}
+  .after .mark{background:rgba(52,211,153,0.16);color:var(--good);}
+
+  @media (max-width:720px){
+    .compare{grid-template-columns:1fr;}
+    .steps{grid-template-columns:1fr 1fr;}
+  }
+
+  /* how it works */
+  .flow{
+    display:grid;grid-template-columns:1fr auto 1fr;gap:22px;align-items:center;
+    margin-bottom:40px;
+  }
+  .flow-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:26px;text-align:center;}
+  .flow-card .tag{font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--accent-2);margin-bottom:10px;}
+  .flow-card .big{font-size:20px;font-weight:700;margin-bottom:6px;}
+  .flow-card .cap{font-size:13px;color:var(--text-dim);}
+  .flow-arrow{display:flex;flex-direction:column;align-items:center;gap:6px;color:var(--text-faint);font-size:12px;}
+  .flow-arrow .line{width:64px;height:2px;background:var(--accent-grad);border-radius:2px;}
+  @media (max-width:720px){
+    .flow{grid-template-columns:1fr;}
+    .flow-arrow{flex-direction:row;justify-content:center;}
+    .flow-arrow .line{width:2px;height:36px;}
+  }
+
+  .privacy-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+  .privacy-card{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:22px;}
+  .privacy-card .ico{font-size:22px;margin-bottom:10px;}
+  .privacy-card h4{margin:0 0 8px;font-size:15px;}
+  .privacy-card p{margin:0;font-size:13.5px;color:var(--text-dim);}
+  @media (max-width:720px){.privacy-grid{grid-template-columns:1fr;}}
+
+  table.roles{width:100%;border-collapse:collapse;margin-top:8px;font-size:14px;}
+  table.roles th,table.roles td{text-align:left;padding:14px 16px;border-bottom:1px solid var(--border);}
+  table.roles th{color:var(--text-faint);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:0.04em;}
+  table.roles td.role{font-weight:700;color:var(--accent-1);}
+
+  /* install */
+  .install-grid{display:grid;grid-template-columns:1.1fr 0.9fr;gap:28px;align-items:start;}
+  @media (max-width:820px){.install-grid{grid-template-columns:1fr;}}
+  .code-block{
+    background:#080c18;border:1px solid var(--border);border-radius:14px;
+    padding:18px 18px;font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+    font-size:13.5px;color:#c9e2ff;overflow-x:auto;position:relative;
+  }
+  .code-block code{white-space:pre;}
+  .copy-btn{
+    position:absolute;top:12px;right:12px;
+    font-size:12px;font-weight:600;color:var(--text-dim);
+    background:var(--bg-card);border:1px solid var(--border-strong);border-radius:8px;
+    padding:6px 10px;cursor:pointer;transition:color .15s,border-color .15s;
+    font-family:-apple-system,BlinkMacSystemFont,sans-serif;
+  }
+  .copy-btn:hover{color:var(--text);border-color:var(--accent-1);}
+  .copy-btn.copied{color:var(--good);border-color:var(--good);}
+  .install-note{font-size:13.5px;color:var(--text-dim);margin-top:14px;}
+  .install-note code{background:var(--bg-card);padding:2px 6px;border-radius:5px;font-size:12.5px;}
+
+  .side-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;}
+  .side-card h4{margin:0 0 10px;font-size:15px;}
+  .side-card p{margin:0 0 16px;font-size:13.5px;color:var(--text-dim);}
+  .req-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px;font-size:13.5px;}
+  .req-list li{display:flex;justify-content:space-between;border-bottom:1px dashed var(--border);padding-bottom:10px;color:var(--text-dim);}
+  .req-list li span:last-child{color:var(--text);font-weight:600;}
+
+  /* trust */
+  .trust-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+  .trust-card{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:20px;text-align:center;}
+  .trust-card .ico{font-size:24px;margin-bottom:10px;}
+  .trust-card h4{margin:0 0 6px;font-size:14px;}
+  .trust-card p{margin:0;font-size:12.5px;color:var(--text-dim);}
+  @media (max-width:820px){.trust-grid{grid-template-columns:1fr 1fr;}}
+
+  /* final cta */
+  .final-cta{text-align:center;padding:96px 0;}
+  .final-cta h2{margin-bottom:14px;}
+
+  footer{border-top:1px solid var(--border);padding:44px 0 60px;}
+  .foot-inner{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:20px;}
+  .foot-links{display:flex;gap:22px;font-size:13.5px;color:var(--text-dim);flex-wrap:wrap;}
+  .foot-links a{text-decoration:none;}
+  .foot-links a:hover{color:var(--text);}
+  .foot-brand{font-size:13px;color:var(--text-faint);}
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="#top">
+      <img src="assets/app-icon-512.png" alt="" />
+      <span class="brand-full">Universal Control Helper</span>
+      <span class="brand-short">UC Helper</span>
+    </a>
+    <nav class="links">
+      <a href="#problem">왜 필요한가요</a>
+      <a href="#how">작동 방식</a>
+      <a href="#install">설치</a>
+      <a href="#trust">오픈소스 &amp; 보안</a>
+    </nav>
+    <a class="nav-cta" href="https://github.com/feelgom/universal-control-helper/releases/latest">다운로드</a>
+  </div>
+</header>
+
+<main id="top">
+
+  <section class="hero" style="border-top:none;padding-top:76px;">
+    <div class="wrap">
+      <span class="eyebrow">Universal Control용 무료 오픈소스 유틸리티 · <b>macOS 13+</b></span>
+      <h1>두 Mac 사이의<br /><span class="grad">Caps Lock 한/영 전환</span>을 되살립니다</h1>
+      <p class="sub">커서는 자연스럽게 다른 Mac으로 넘어갔는데, 손에 익은 입력 방식은 따라오지 않나요?<br />Universal Control Helper가 끊어진 입력 경험의 마지막 한 조각을 이어 줍니다.</p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="https://github.com/feelgom/universal-control-helper/releases/latest">
+          ⌘ 최신 버전 다운로드
+        </a>
+        <a class="btn btn-ghost" href="https://github.com/feelgom/universal-control-helper">
+          GitHub에서 보기 ↗
+        </a>
+      </div>
+      <div class="hero-art">
+        <img src="assets/hero.svg" alt="Source Mac의 물리 Caps Lock을 감지해 Target Mac의 ABC/두벌식 상태로 전달하는 다이어그램" />
+      </div>
+      <div class="badges">
+        <img alt="Latest release" src="https://img.shields.io/github/v/release/feelgom/universal-control-helper?style=flat-square&color=5b7cfa" />
+        <img alt="CI" src="https://img.shields.io/github/actions/workflow/status/feelgom/universal-control-helper/ci.yml?branch=main&style=flat-square&label=build" />
+        <img alt="MIT License" src="https://img.shields.io/badge/license-MIT-31c48d?style=flat-square" />
+        <img alt="GitHub stars" src="https://img.shields.io/github/stars/feelgom/universal-control-helper?style=flat-square&color=f5c542" />
+      </div>
+    </div>
+  </section>
+
+  <section id="problem">
+    <div class="wrap">
+      <div class="kicker">왜 필요한가요</div>
+      <h2>Universal Control은 커서를 옮겨주지만,<br />입력 습관까지 옮겨주지는 않습니다</h2>
+      <p class="lede">Apple Universal Control은 키보드와 트랙패드 하나로 Mac 두 대를 오가게 해주지만, 한국어 사용자가 매일 쓰는 <strong>Caps Lock 한/영 전환은 다른 Mac에서 먹통이 되곤 합니다.</strong></p>
+
+      <div class="steps">
+        <div class="step"><div class="n">1</div><p>커서를 다른 Mac으로 옮긴 뒤 평소처럼 Caps Lock을 누릅니다</p></div>
+        <div class="step"><div class="n">2</div><p>한/영이 바뀌지 않은 채로 입력이 시작됩니다</p></div>
+        <div class="step"><div class="n">3</div><p>잘못 입력된 글자를 지우고 다시 씁니다</p></div>
+        <div class="step"><div class="n">4</div><p>입력 메뉴나 다른 단축키를 찾아 수동으로 전환합니다</p></div>
+      </div>
+
+      <div class="compare">
+        <div class="before">
+          <h3>Universal Control Helper 없이</h3>
+          <ul>
+            <li><span class="mark">✕</span>다른 Mac에서 Caps Lock을 눌러도 한/영이 바뀌지 않음</li>
+            <li><span class="mark">✕</span>입력 언어가 달라 오타를 낸 뒤 다시 작성</li>
+            <li><span class="mark">✕</span>입력 메뉴를 클릭하거나 다른 단축키를 따로 기억해야 함</li>
+            <li><span class="mark">✕</span>문서·메신저·터미널을 오갈 때마다 같은 흐름 반복</li>
+          </ul>
+        </div>
+        <div class="after">
+          <h3>Universal Control Helper 사용 후</h3>
+          <ul>
+            <li><span class="mark">✓</span>어느 Mac에서든 평소처럼 <strong>Caps Lock 한 번</strong></li>
+            <li><span class="mark">✓</span>두 Mac의 <strong>ABC ↔ 두벌식 상태를 자동 동기화</strong></li>
+            <li><span class="mark">✓</span>커서가 어디에 있든 <strong>같은 근육 기억을 유지</strong></li>
+            <li><span class="mark">✓</span>메뉴 막대에서 조용히 실행, 필요할 때 언제든 끄기 가능</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="how">
+    <div class="wrap center-head">
+      <div class="kicker">작동 방식</div>
+      <h2>물리 Caps Lock을 감지해, 같은 네트워크의 다른 Mac에 전달합니다</h2>
+      <p class="lede center">키보드가 연결된 Mac이 Source, 조작 대상이 Target입니다. 역할과 페어링 코드만 맞추면 나머지는 자동으로 동기화됩니다.</p>
+
+      <div class="flow">
+        <div class="flow-card">
+          <div class="tag">Source Mac</div>
+          <div class="big">⇪ 물리 Caps Lock 감지</div>
+          <div class="cap">키보드가 연결된 Mac · 입력 모니터링 권한 필요</div>
+        </div>
+        <div class="flow-arrow">
+          <span>Bonjour</span>
+          <div class="line"></div>
+          <span>페어링 코드</span>
+        </div>
+        <div class="flow-card">
+          <div class="tag">Target Mac</div>
+          <div class="big">한/영 ↔ ABC 전환</div>
+          <div class="cap">조작할 다른 Mac · 로컬 네트워크만 필요</div>
+        </div>
+      </div>
+
+      <table class="roles" style="text-align:left;">
+        <thead>
+          <tr><th>Mac</th><th>역할</th><th>필요한 권한</th><th>할 일</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>키보드가 연결된 Mac</td>
+            <td class="role">Source</td>
+            <td>입력 모니터링, 로컬 네트워크</td>
+            <td>자동 생성된 코드 확인</td>
+          </tr>
+          <tr>
+            <td>조작할 다른 Mac</td>
+            <td class="role">Target</td>
+            <td>로컬 네트워크</td>
+            <td>Source의 코드 입력</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="kicker">개인정보</div>
+      <h2>조용히, 필요한 것만</h2>
+      <p class="lede">Caps Lock과 입력 소스 상태 외에는 아무것도 들여다보지 않습니다.</p>
+      <div class="privacy-grid">
+        <div class="privacy-card">
+          <div class="ico">⌨️</div>
+          <h4>일반 키 입력 미처리</h4>
+          <p>물리 Caps Lock 눌림만 감지하며, 그 외 키 입력은 그대로 통과시킵니다.</p>
+        </div>
+        <div class="privacy-card">
+          <div class="ico">🔒</div>
+          <h4>수집하지 않음</h4>
+          <p>입력한 텍스트, 클립보드, 마우스 이벤트를 수집하거나 서버로 전송하지 않습니다.</p>
+        </div>
+        <div class="privacy-card">
+          <div class="ico">🛜</div>
+          <h4>로컬 네트워크 한정</h4>
+          <p>같은 LAN의 Bonjour와 페어링 코드로만 연결되며, 외부 서버를 거치지 않습니다.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="install">
+    <div class="wrap">
+      <div class="kicker">빠른 시작</div>
+      <h2>설치는 명령어 한 줄이면 충분합니다</h2>
+      <p class="lede">최신 Release를 내려받아 SHA-256 체크섬과 앱 서명을 확인한 뒤 /Applications에 설치합니다.</p>
+
+      <div class="install-grid">
+        <div>
+          <div class="code-block">
+            <button class="copy-btn" data-copy="curl -fsSL https://github.com/feelgom/universal-control-helper/releases/latest/download/install.sh | bash">복사</button>
+            <code>curl -fsSL https://github.com/feelgom/universal-control-helper/releases/latest/download/install.sh | bash</code>
+          </div>
+          <p class="install-note">
+            실행 전 스크립트 내용을 확인하려면 <code>curl ... -o install.sh</code>로 내려받아 검토한 뒤 실행하세요.
+            자동 실행 없이 설치하려면 <code>--no-launch</code>, 다른 폴더에 설치하려면 <code>--install-dir</code> 옵션을 사용할 수 있습니다.
+          </p>
+          <p class="install-note">
+            스크립트 대신 직접 설치하려면 <a href="https://github.com/feelgom/universal-control-helper/releases/latest" style="color:var(--accent-1);">최신 Release</a>에서
+            <code>UniversalControlHelper-macOS-universal.zip</code>을 내려받아 압축을 풀고 앱을 <code>/Applications</code>로 옮기면 됩니다.
+          </p>
+        </div>
+        <div class="side-card">
+          <h4>설치 전 확인할 것</h4>
+          <ul class="req-list">
+            <li><span>운영체제</span><span>macOS 13 이상</span></li>
+            <li><span>입력 조합</span><span>ABC ↔ 두벌식</span></li>
+            <li><span>네트워크</span><span>두 Mac이 같은 신뢰된 LAN</span></li>
+            <li><span>Universal Control</span><span>두 Mac 모두 활성화</span></li>
+            <li><span>라이선스</span><span>MIT · 무료</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="trust">
+    <div class="wrap">
+      <div class="kicker">오픈소스 &amp; 보안</div>
+      <h2>코드는 전부 공개되어 있습니다</h2>
+      <p class="lede">입력 모니터링 권한을 요청하는 앱이기에, 무엇을 하고 무엇을 하지 않는지 코드로 직접 확인할 수 있어야 한다고 생각합니다.</p>
+      <div class="trust-grid">
+        <div class="trust-card">
+          <div class="ico">📖</div>
+          <h4>MIT 오픈소스</h4>
+          <p>전체 소스코드가 GitHub에 공개되어 있고 누구나 검토·기여할 수 있습니다.</p>
+        </div>
+        <div class="trust-card">
+          <div class="ico">🪪</div>
+          <h4>Developer ID 서명 · 공증</h4>
+          <p>정식 빌드는 Apple Developer ID로 서명하고 공증을 거쳐 배포됩니다.</p>
+        </div>
+        <div class="trust-card">
+          <div class="ico">🔁</div>
+          <h4>Sparkle 자동 업데이트</h4>
+          <p>EdDSA로 서명된 업데이트만 GitHub Release에서 확인·적용합니다.</p>
+        </div>
+        <div class="trust-card">
+          <div class="ico">🛡️</div>
+          <h4>비공개 보안 신고</h4>
+          <p>취약점은 공개 이슈 대신 보안 정책의 비공개 채널로 제보받습니다.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="final-cta" style="border-top:1px solid var(--border);">
+    <div class="wrap">
+      <h2>이제 Caps Lock을 신경 쓰지 마세요</h2>
+      <p class="lede center">무료이고, 오픈소스이며, 설치는 1분이면 끝납니다.</p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="https://github.com/feelgom/universal-control-helper/releases/latest">⌘ 최신 버전 다운로드</a>
+        <a class="btn btn-ghost" href="https://github.com/feelgom/universal-control-helper#사용법">사용법 자세히 보기</a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap foot-inner">
+    <div class="foot-brand">Universal Control Helper — 비공식 오픈소스 유틸리티. Apple과 제휴하거나 Apple이 보증한 제품이 아닙니다.</div>
+    <div class="foot-links">
+      <a href="https://github.com/feelgom/universal-control-helper">GitHub</a>
+      <a href="https://github.com/feelgom/universal-control-helper/releases">Releases</a>
+      <a href="https://github.com/feelgom/universal-control-helper/issues">Issues</a>
+      <a href="https://github.com/feelgom/universal-control-helper/blob/main/SECURITY.md">보안 정책</a>
+      <a href="https://github.com/feelgom/universal-control-helper/blob/main/LICENSE">MIT License</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  function fallbackCopy(text) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+  document.querySelectorAll('.copy-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var text = btn.getAttribute('data-copy');
+      var markCopied = function () {
+        var original = btn.textContent;
+        btn.textContent = '복사됨';
+        btn.classList.add('copied');
+        setTimeout(function () {
+          btn.textContent = original;
+          btn.classList.remove('copied');
+        }, 1600);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(markCopied, function () {
+          fallbackCopy(text);
+          markCopied();
+        });
+      } else {
+        fallbackCopy(text);
+        markCopied();
+      }
+    });
+  });
+</script>
+
+</body>
+</html>
