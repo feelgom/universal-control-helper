@@ -1,5 +1,8 @@
 # UniInput Fix
 
+[![CI](https://github.com/feelgom/UniInputFix/actions/workflows/ci.yml/badge.svg)](https://github.com/feelgom/UniInputFix/actions/workflows/ci.yml)
+[![Latest Release](https://img.shields.io/github/v/release/feelgom/UniInputFix)](https://github.com/feelgom/UniInputFix/releases/latest)
+
 Universal Control로 다른 Mac을 조작할 때 Caps Lock 한/영 전환이 동작하지 않는 문제를 보정하는 macOS 메뉴 막대 앱입니다.
 
 > 휠 스크롤 문제는 구형 Logi Options 삭제로 해결되었으므로, 버전 1.1부터 마우스 감시와 스크롤 릴레이 기능을 완전히 제거했습니다.
@@ -36,6 +39,8 @@ Universal Control로 다른 Mac을 조작할 때 Caps Lock 한/영 전환이 동
 ## 업데이트
 
 앱은 Sparkle을 통해 GitHub Release의 서명된 업데이트 피드를 확인합니다. 메뉴의 **업데이트 확인…**으로 즉시 확인할 수 있으며, 기본적으로 새 버전을 주기적으로 확인합니다.
+
+현재 공개 빌드는 Apple Developer ID 서명·공증 없이 배포됩니다. Sparkle 업데이트 파일은 EdDSA 서명으로 검증되지만, macOS가 앱 버전 교체 후 Source Mac의 접근성 또는 입력 모니터링 권한을 다시 허용하도록 요청할 수 있습니다.
 
 ## 개발
 
