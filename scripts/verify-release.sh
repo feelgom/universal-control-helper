@@ -6,6 +6,7 @@ APP_DIR="${1:-$PROJECT_DIR/dist/Universal Control Helper.app}"
 
 codesign --verify --deep --strict --verbose=2 "$APP_DIR"
 plutil -lint "$APP_DIR/Contents/Info.plist"
+test -f "$APP_DIR/Contents/Resources/AppIcon.icns"
 
 if [[ "${REQUIRE_UNIVERSAL:-0}" == "1" ]]; then
   ARCHS="$(lipo -archs "$APP_DIR/Contents/MacOS/UniversalControlHelper")"
