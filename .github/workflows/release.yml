@@ -36,19 +36,19 @@ jobs:
       - name: Create signed Sparkle feed
         run: |
           mkdir -p release-feed
-          ditto -c -k --sequesterRsrc --keepParent dist/UniInputFix.app release-feed/UniInputFix-macOS-universal.zip
-          cp RELEASE_NOTES.md release-feed/UniInputFix-macOS-universal.md
+          ditto -c -k --sequesterRsrc --keepParent "dist/Universal Control Helper.app" release-feed/UniversalControlHelper-macOS-universal.zip
+          cp RELEASE_NOTES.md release-feed/UniversalControlHelper-macOS-universal.md
           printf '%s' "$SPARKLE_PRIVATE_KEY" | .build/artifacts/sparkle/Sparkle/bin/generate_appcast \
             --ed-key-file - \
             --download-url-prefix "https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}/" \
             --link "https://github.com/${GITHUB_REPOSITORY}" \
             --embed-release-notes \
             release-feed
-          cp release-feed/UniInputFix-macOS-universal.zip dist/UniInputFix-macOS-universal.zip
+          cp release-feed/UniversalControlHelper-macOS-universal.zip dist/UniversalControlHelper-macOS-universal.zip
           cp release-feed/appcast.xml dist/appcast.xml
           cp scripts/install.sh dist/install.sh
           cd dist
-          shasum -a 256 UniInputFix-macOS-universal.zip > SHA256SUMS
+          shasum -a 256 UniversalControlHelper-macOS-universal.zip > SHA256SUMS
 
       - name: Verify Sparkle signature
         run: |
@@ -58,9 +58,9 @@ jobs:
       - name: Publish GitHub Release
         run: |
           gh release create "$GITHUB_REF_NAME" \
-            dist/UniInputFix-macOS-universal.zip \
+            dist/UniversalControlHelper-macOS-universal.zip \
             dist/appcast.xml \
             dist/SHA256SUMS \
             dist/install.sh \
-            --title "UniInput Fix ${GITHUB_REF_NAME#v}" \
+            --title "Universal Control Helper ${GITHUB_REF_NAME#v}" \
             --notes-file RELEASE_NOTES.md

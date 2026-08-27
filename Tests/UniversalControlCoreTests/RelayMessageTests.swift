@@ -1,5 +1,5 @@
 import XCTest
-@testable import UniInputCore
+@testable import UniversalControlCore
 
 final class RelayMessageTests: XCTestCase {
     func testRoundTripToggleMessage() throws {

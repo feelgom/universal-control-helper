@@ -2,7 +2,7 @@
 set -euo pipefail
 
 PROJECT_DIR="${0:A:h:h}"
-APP_DIR="$PROJECT_DIR/dist/UniInputFix.app"
+APP_DIR="$PROJECT_DIR/dist/Universal Control Helper.app"
 SPARKLE_FRAMEWORK="$PROJECT_DIR/.build/artifacts/sparkle/Sparkle/Sparkle.xcframework/macos-arm64_x86_64/Sparkle.framework"
 PLIST_VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$PROJECT_DIR/Resources/Info.plist")"
 APP_VERSION="${APP_VERSION:-$PLIST_VERSION}"
@@ -19,8 +19,8 @@ fi
 swift build -c release "${ARCH_ARGS[@]}"
 BIN_DIR="$(swift build -c release "${ARCH_ARGS[@]}" --show-bin-path)"
 
-if [[ ! -f "$BIN_DIR/UniInputFix" ]]; then
-  echo "UniInputFix executable was not produced at $BIN_DIR" >&2
+if [[ ! -f "$BIN_DIR/UniversalControlHelper" ]]; then
+  echo "UniversalControlHelper executable was not produced at $BIN_DIR" >&2
   exit 1
 fi
 
@@ -34,10 +34,10 @@ if [[ -d "$APP_DIR" ]]; then
 fi
 
 mkdir -p "$APP_DIR/Contents/MacOS" "$APP_DIR/Contents/Resources" "$APP_DIR/Contents/Frameworks"
-cp "$BIN_DIR/UniInputFix" "$APP_DIR/Contents/MacOS/UniInputFix"
+cp "$BIN_DIR/UniversalControlHelper" "$APP_DIR/Contents/MacOS/UniversalControlHelper"
 cp "$PROJECT_DIR/Resources/Info.plist" "$APP_DIR/Contents/Info.plist"
 ditto "$SPARKLE_FRAMEWORK" "$APP_DIR/Contents/Frameworks/Sparkle.framework"
-install_name_tool -add_rpath "@executable_path/../Frameworks" "$APP_DIR/Contents/MacOS/UniInputFix"
+install_name_tool -add_rpath "@executable_path/../Frameworks" "$APP_DIR/Contents/MacOS/UniversalControlHelper"
 
 /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $APP_VERSION" "$APP_DIR/Contents/Info.plist"
 /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUMBER" "$APP_DIR/Contents/Info.plist"

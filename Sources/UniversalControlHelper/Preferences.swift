@@ -1,5 +1,5 @@
 import Foundation
-import UniInputCore
+import UniversalControlCore
 
 enum ComputerRole: String {
     case source

@@ -1,19 +1,19 @@
 <p align="center">
-  <img src=".github/assets/hero.svg" alt="UniInput Fix — Universal Control Caps Lock bridge" width="100%" />
+  <img src=".github/assets/hero.svg" alt="Universal Control Helper — keyboard input fixes for macOS Universal Control" width="100%" />
 </p>
 
-<h1 align="center">UniInput Fix</h1>
+<h1 align="center">Universal Control Helper</h1>
 
 <p align="center">
-  <strong>Universal Control에서 사라진 Caps Lock 한/영 전환을 되돌립니다.</strong>
+  <strong>Universal Control의 키보드 입력 문제를 바로잡습니다.</strong>
   <br />
   <sub>키보드 하나, Mac 두 대, 익숙한 전환 방식 그대로.</sub>
 </p>
 
 <p align="center">
-  <a href="https://github.com/feelgom/UniInputFix/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/feelgom/UniInputFix/ci.yml?branch=main&style=flat-square&label=build"></a>
-  <a href="https://github.com/feelgom/UniInputFix/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/feelgom/UniInputFix?style=flat-square&color=5b7cfa"></a>
-  <a href="https://github.com/feelgom/UniInputFix/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/feelgom/UniInputFix?style=flat-square&color=f5c542"></a>
+  <a href="https://github.com/feelgom/universal-control-helper/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/feelgom/universal-control-helper/ci.yml?branch=main&style=flat-square&label=build"></a>
+  <a href="https://github.com/feelgom/universal-control-helper/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/feelgom/universal-control-helper?style=flat-square&color=5b7cfa"></a>
+  <a href="https://github.com/feelgom/universal-control-helper/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/feelgom/universal-control-helper?style=flat-square&color=f5c542"></a>
   <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-31c48d?style=flat-square"></a>
   <img alt="macOS 13+" src="https://img.shields.io/badge/macOS-13%2B-111827?style=flat-square&logo=apple">
 </p>
@@ -28,7 +28,9 @@
 
 ---
 
-macOS Universal Control로 다른 Mac을 조작할 때 Caps Lock을 눌러도 한/영 전환이 되지 않는 경우가 있습니다. UniInput Fix는 **물리 키보드의 Caps Lock 누름만** Source Mac에서 감지하고, 로컬 네트워크를 통해 Target Mac의 `ABC ↔ 두벌식` 입력 소스를 전환합니다.
+macOS Universal Control로 다른 Mac을 조작할 때 Caps Lock을 눌러도 한/영 전환이 되지 않는 경우가 있습니다. Universal Control Helper는 **물리 키보드의 Caps Lock 누름만** Source Mac에서 감지하고, 로컬 네트워크를 통해 Target Mac의 `ABC ↔ 두벌식` 입력 소스를 전환합니다.
+
+> Apple과 제휴하거나 Apple이 보증한 제품이 아닌 비공식 오픈 소스 유틸리티입니다.
 
 > [!NOTE]
 > 휠 스크롤 문제는 구형 Logi Options 삭제로 해결되었으므로, 버전 1.1부터 마우스 감시와 스크롤 릴레이 기능은 포함하지 않습니다.
@@ -40,27 +42,27 @@ macOS Universal Control로 다른 Mac을 조작할 때 Caps Lock을 눌러도 �
 다음 명령은 최신 GitHub Release를 내려받고, 게시된 SHA-256 체크섬과 앱 서명을 확인한 뒤 `/Applications`에 설치합니다. 기존 설치본은 삭제하지 않고 사용자 Library의 백업 폴더로 이동합니다.
 
 ```bash
-curl -fsSL https://github.com/feelgom/UniInputFix/releases/latest/download/install.sh | bash
+curl -fsSL https://github.com/feelgom/universal-control-helper/releases/latest/download/install.sh | bash
 ```
 
 실행 전에 스크립트를 확인하려면:
 
 ```bash
-curl -fsSL https://github.com/feelgom/UniInputFix/releases/latest/download/install.sh -o /tmp/uniinputfix-install.sh
-less /tmp/uniinputfix-install.sh
-bash /tmp/uniinputfix-install.sh
+curl -fsSL https://github.com/feelgom/universal-control-helper/releases/latest/download/install.sh -o /tmp/universal-control-helper-install.sh
+less /tmp/universal-control-helper-install.sh
+bash /tmp/universal-control-helper-install.sh
 ```
 
 앱을 자동 실행하지 않거나 다른 폴더에 설치할 수도 있습니다.
 
 ```bash
-bash /tmp/uniinputfix-install.sh --no-launch
-bash /tmp/uniinputfix-install.sh --install-dir "$HOME/Applications"
+bash /tmp/universal-control-helper-install.sh --no-launch
+bash /tmp/universal-control-helper-install.sh --install-dir "$HOME/Applications"
 ```
 
 ### 직접 설치
 
-[최신 Release](https://github.com/feelgom/UniInputFix/releases/latest)에서 `UniInputFix-macOS-universal.zip`을 받아 압축을 풀고 `UniInputFix.app`을 `/Applications`로 옮깁니다.
+[최신 Release](https://github.com/feelgom/universal-control-helper/releases/latest)에서 `UniversalControlHelper-macOS-universal.zip`을 받아 압축을 풀고 `Universal Control Helper.app`을 `/Applications`로 옮깁니다.
 
 > [!IMPORTANT]
 > 현재 공개 빌드는 Apple Developer ID 서명·공증 없이 배포됩니다. 첫 실행 시 Finder에서 앱을 Control-클릭한 뒤 **열기**를 선택해야 할 수 있습니다.
@@ -124,11 +126,11 @@ REQUIRE_UNIVERSAL=1 ./scripts/verify-release.sh
 ## Star History
 
 <p align="center">
-  <a href="https://www.star-history.com/#feelgom/UniInputFix&type=date">
+  <a href="https://www.star-history.com/#feelgom/universal-control-helper&type=date">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=feelgom/UniInputFix&type=date&theme=dark" />
-      <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=feelgom/UniInputFix&type=date" />
-      <img alt="UniInput Fix Star History" src="https://api.star-history.com/svg?repos=feelgom/UniInputFix&type=date" width="760" />
+      <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=feelgom/universal-control-helper&type=date&theme=dark" />
+      <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=feelgom/universal-control-helper&type=date" />
+      <img alt="Universal Control Helper Star History" src="https://api.star-history.com/svg?repos=feelgom/universal-control-helper&type=date" width="760" />
     </picture>
   </a>
 </p>
@@ -136,5 +138,5 @@ REQUIRE_UNIVERSAL=1 ./scripts/verify-release.sh
 ## 보안 및 기여
 
 - 보안 문제는 공개 Issue 대신 [보안 정책](SECURITY.md)에 안내된 비공개 신고 기능을 이용해 주세요.
-- 버그 제보와 개선 제안은 [GitHub Issues](https://github.com/feelgom/UniInputFix/issues)에서 받습니다.
+- 버그 제보와 개선 제안은 [GitHub Issues](https://github.com/feelgom/universal-control-helper/issues)에서 받습니다.
 - 코드는 [MIT License](LICENSE)로 배포됩니다.

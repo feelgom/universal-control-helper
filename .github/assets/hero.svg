@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="440" viewBox="0 0 1200 440" role="img" aria-labelledby="title desc">
-  <title id="title">UniInput Fix</title>
+  <title id="title">Universal Control Helper</title>
   <desc id="desc">Caps Lock input switching bridge between two Macs using Universal Control</desc>
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
@@ -21,8 +21,8 @@
   <circle cx="110" cy="420" r="190" fill="#38bdf8" opacity="0.08"/>
   <rect x="52" y="42" width="112" height="30" rx="15" fill="#ffffff" opacity="0.10"/>
   <text x="108" y="62" text-anchor="middle" fill="#cbd5e1" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="14" font-weight="600">macOS 13+</text>
-  <text x="600" y="102" text-anchor="middle" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="54" font-weight="750" letter-spacing="-1">UniInput Fix</text>
-  <text x="600" y="140" text-anchor="middle" fill="#c7d2fe" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="21">Caps Lock 하나로, 두 Mac의 한/영 전환을 자연스럽게.</text>
+  <text x="600" y="102" text-anchor="middle" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="48" font-weight="750" letter-spacing="-1">Universal Control Helper</text>
+  <text x="600" y="140" text-anchor="middle" fill="#c7d2fe" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="21">두 Mac 사이의 키보드 입력을 다시 자연스럽게.</text>
   <g transform="translate(125 192)">
     <rect width="300" height="168" rx="16" fill="#0f172a" stroke="#64748b" stroke-width="3"/>
     <rect x="15" y="15" width="270" height="138" rx="8" fill="#1e293b"/>

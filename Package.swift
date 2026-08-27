@@ -3,21 +3,21 @@
 import PackageDescription
 
 let package = Package(
-    name: "UniversalControlInputFix",
+    name: "UniversalControlHelper",
     platforms: [.macOS(.v13)],
     products: [
-        .library(name: "UniInputCore", targets: ["UniInputCore"]),
-        .executable(name: "UniInputFix", targets: ["UniInputFix"]),
+        .library(name: "UniversalControlCore", targets: ["UniversalControlCore"]),
+        .executable(name: "UniversalControlHelper", targets: ["UniversalControlHelper"]),
     ],
     dependencies: [
         .package(url: "https://github.com/sparkle-project/Sparkle", exact: "2.9.6"),
     ],
     targets: [
-        .target(name: "UniInputCore"),
+        .target(name: "UniversalControlCore"),
         .executableTarget(
-            name: "UniInputFix",
+            name: "UniversalControlHelper",
             dependencies: [
-                "UniInputCore",
+                "UniversalControlCore",
                 .product(name: "Sparkle", package: "Sparkle"),
             ],
             linkerSettings: [
@@ -28,6 +28,6 @@ let package = Package(
                 .linkedFramework("Network"),
             ]
         ),
-        .testTarget(name: "UniInputCoreTests", dependencies: ["UniInputCore"]),
+        .testTarget(name: "UniversalControlCoreTests", dependencies: ["UniversalControlCore"]),
     ]
 )

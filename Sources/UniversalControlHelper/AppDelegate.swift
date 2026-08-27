@@ -1,6 +1,6 @@
 import AppKit
 import Sparkle
-import UniInputCore
+import UniversalControlCore
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private let preferences = Preferences()
@@ -26,7 +26,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if preferences.role == .source, !requestAccessibilityPermission() {
             showInfo(
                 title: "접근성 권한이 필요합니다",
-                message: "Caps Lock을 읽고 로컬 동작을 막으려면 시스템 설정 > 개인정보 보호 및 보안에서 UniInputFix의 접근성과 입력 모니터링 권한을 허용해 주세요."
+                message: "Caps Lock을 읽고 로컬 동작을 막으려면 시스템 설정 > 개인정보 보호 및 보안에서 Universal Control Helper의 접근성과 입력 모니터링 권한을 허용해 주세요."
             )
         }
     }
@@ -76,7 +76,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard statusItem != nil else { return }
         let menu = NSMenu()
 
-        let title = NSMenuItem(title: "UniInput Fix", action: nil, keyEquivalent: "")
+        let title = NSMenuItem(title: "Universal Control Helper", action: nil, keyEquivalent: "")
         title.isEnabled = false
         menu.addItem(title)
         menu.addItem(.separator())
@@ -128,7 +128,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(about)
         menu.addItem(.separator())
 
-        let quit = NSMenuItem(title: "UniInput Fix 종료", action: #selector(quit), keyEquivalent: "q")
+        let quit = NSMenuItem(title: "Universal Control Helper 종료", action: #selector(quit), keyEquivalent: "q")
         quit.target = self
         menu.addItem(quit)
         statusItem.menu = menu
@@ -191,7 +191,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func showInstructions() {
         showInfo(
-            title: "UniInput Fix 사용 방법",
+            title: "Universal Control Helper 사용 방법",
             message: "1. 키보드가 연결된 Mac은 Source로 둡니다.\n2. 다른 Mac에도 앱을 복사해 Target으로 바꿉니다.\n3. 두 Mac의 6자리 페어링 코드를 같게 맞춥니다.\n4. Universal Control로 대상 Mac을 사용할 때 Source에서 Caps Lock 보정을 켭니다.\n\n⌃⌥⌘U로 보정을 빠르게 켜고 끌 수 있습니다. 보정이 켜진 동안 Caps Lock은 대상 Mac의 한국어/ABC 입력 소스 전환으로 처리됩니다."
         )
     }

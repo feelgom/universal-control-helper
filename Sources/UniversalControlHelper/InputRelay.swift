@@ -2,7 +2,7 @@ import AppKit
 import ApplicationServices
 import Carbon
 import IOKit.hid
-import UniInputCore
+import UniversalControlCore
 
 final class InputRelay {
     var relayActiveDidChange: ((Bool) -> Void)?

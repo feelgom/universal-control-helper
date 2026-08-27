@@ -1,7 +1,6 @@
-# UniInput Fix 1.1.2
+# Universal Control Helper 1.2.0
 
-- 체크섬과 앱 서명을 확인하는 macOS 설치 스크립트를 추가했습니다.
-- 기존 설치본을 자동 백업한 뒤 최신 버전으로 교체합니다.
-- 각 GitHub Release에 `install.sh`를 함께 배포합니다.
-- README 디자인, 빠른 시작, 권한 및 보안 안내를 전면 개선했습니다.
-- Star History 차트를 추가했습니다.
+- 제품명을 UniInput Fix에서 Universal Control Helper로 변경했습니다.
+- 기존 번들 ID, 설정, Bonjour 호환성과 Sparkle 업데이트 신뢰 체인은 유지됩니다.
+- 설치기가 기존 `UniInputFix.app`을 자동 백업하고 새 앱 이름으로 이전합니다.
+- 저장소, 설치 명령, Release 자산 이름을 새 브랜드에 맞췄습니다.

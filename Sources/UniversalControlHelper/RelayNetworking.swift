@@ -1,6 +1,6 @@
 import Foundation
 import Network
-import UniInputCore
+import UniversalControlCore
 
 protocol RelayTransport: AnyObject {
     var statusDidChange: ((String) -> Void)? { get set }
@@ -11,7 +11,7 @@ protocol RelayTransport: AnyObject {
 final class SourceClient: RelayTransport {
     var statusDidChange: ((String) -> Void)?
 
-    private let queue = DispatchQueue(label: "io.yoonsungji.uniinputfix.source-network")
+    private let queue = DispatchQueue(label: "io.yoonsungji.universalcontrolhelper.source-network")
     private let tokenProvider: () -> String
     private var browser: NWBrowser?
     private var connection: NWConnection?
@@ -144,7 +144,7 @@ final class TargetServer: RelayTransport {
     var statusDidChange: ((String) -> Void)?
     var messageReceived: ((RelayMessage) -> Void)?
 
-    private let queue = DispatchQueue(label: "io.yoonsungji.uniinputfix.target-network")
+    private let queue = DispatchQueue(label: "io.yoonsungji.universalcontrolhelper.target-network")
     private let tokenProvider: () -> String
     private var listener: NWListener?
     private var connections: [ObjectIdentifier: NWConnection] = [:]
@@ -160,7 +160,7 @@ final class TargetServer: RelayTransport {
         do {
             let listener = try NWListener(using: .tcp, on: .any)
             listener.service = NWListener.Service(
-                name: Host.current().localizedName ?? "UniInputFix",
+                name: Host.current().localizedName ?? "Universal Control Helper",
                 type: "_uniinputfix._tcp"
             )
             listener.stateUpdateHandler = { [weak self] state in
