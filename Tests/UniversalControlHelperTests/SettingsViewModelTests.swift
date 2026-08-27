@@ -118,7 +118,7 @@ final class SettingsViewModelTests: XCTestCase {
             connectionStatus: status,
             inputMonitoringReady: false,
             helperEnabled: true,
-            currentVersion: "1.5.2",
+            currentVersion: "1.5.3",
             canCheckForUpdates: true,
             launchAtLoginState: .disabled
         )

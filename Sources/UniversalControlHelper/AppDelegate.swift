@@ -284,7 +284,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func resetInputMonitoring() {
         let alert = NSAlert()
         alert.messageText = "입력 모니터링 권한을 다시 등록할까요?"
-        alert.informativeText = "Universal Control Helper의 오래된 권한 항목만 제거합니다. 다른 앱의 권한은 변경하지 않습니다."
+        alert.informativeText = "Universal Control Helper의 오래된 권한 항목만 제거합니다. 다른 앱의 권한은 변경하지 않습니다. 재등록 후 목록에 앱이 자동으로 나타나지 않으면 +를 누르고 /Applications/Universal Control Helper.app을 선택하세요."
         alert.addButton(withTitle: "재등록")
         alert.addButton(withTitle: "취소")
         guard alert.runModal() == .alertFirstButtonReturn else { return }
@@ -302,6 +302,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         connectionStatus = "입력 모니터링을 다시 허용해 주세요"
         _ = refreshInputMonitoring()
+
+        let instructions = NSAlert()
+        instructions.messageText = "입력 모니터링을 허용해 주세요"
+        instructions.informativeText = "목록에 Universal Control Helper가 있으면 스위치를 켜세요. 보이지 않으면 +를 누르고 앱을 선택한 뒤, macOS가 요청하면 앱을 종료하고 다시 여세요. 설정창의 ‘앱 위치 보기’로 현재 앱을 Finder에서 확인할 수 있습니다."
+        instructions.addButton(withTitle: "확인")
+        instructions.runModal()
         AppPermissions.openInputMonitoringSettings()
     }
 

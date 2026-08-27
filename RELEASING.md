@@ -62,7 +62,7 @@ gh workflow run release.yml --ref main
 4. 버전 커밋에 태그를 만들고 푸시합니다.
 
    ```sh
-   git tag v1.5.2
+   git tag v1.5.3
    git push origin main --tags
    ```
 

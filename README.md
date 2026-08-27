@@ -113,7 +113,7 @@ Source Mac ── Bonjour / 같은 LAN ──▶ Target Mac
 
 앱은 [Sparkle](https://sparkle-project.org/)로 GitHub Release의 EdDSA 서명 업데이트를 확인합니다. 설정창의 **소프트웨어 업데이트** 섹션에서 현재 버전을 보거나 **업데이트 확인…**을 선택할 수 있으며, 기본 주기 확인도 지원합니다.
 
-v1.5.2는 Universal Control이 키보드를 Target으로 전달하는 동안에도 물리 Caps Lock을 감지하기 위해 Source에서 입력 모니터링 권한을 사용합니다. Target에는 이 권한이 필요하지 않습니다. 스위치가 켜져 있어도 현재 빌드가 미허용이면 설정창의 **권한 항목 재등록…**을 사용하세요. Developer ID가 없는 임시 서명 빌드에서는 업데이트 후 macOS가 권한을 다시 요청할 가능성을 완전히 배제할 수 없으며, Developer ID를 도입하면 앱의 서명 신원을 업데이트 간에 유지할 수 있습니다.
+v1.5.3은 Universal Control이 키보드를 Target으로 전달하는 동안에도 물리 Caps Lock을 감지하기 위해 Source에서 입력 모니터링 권한을 사용합니다. Target에는 이 권한이 필요하지 않습니다. 스위치가 켜져 있어도 현재 빌드가 미허용이면 설정창의 **권한 항목 재등록…**을 사용하고 macOS 승인 요청을 허용하세요. 앱이 목록에 자동으로 나타나지 않으면 입력 모니터링 설정의 `+`를 누르고 `/Applications/Universal Control Helper.app`을 선택합니다. Developer ID가 없는 임시 서명 빌드에서는 업데이트 후 macOS가 권한을 다시 요청할 가능성을 완전히 배제할 수 없으며, Developer ID를 도입하면 앱의 서명 신원을 업데이트 간에 유지할 수 있습니다.
 
 ## 개발
 

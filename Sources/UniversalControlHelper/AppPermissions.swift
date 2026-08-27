@@ -29,6 +29,9 @@ enum AppPermissions {
             return true
         }
         _ = IOHIDRequestAccess(kIOHIDRequestTypeListenEvent)
+        if inputMonitoring != .granted {
+            _ = CGRequestListenEventAccess()
+        }
         return inputMonitoring == .granted
     }
 
@@ -37,6 +40,10 @@ enum AppPermissions {
             string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ListenEvent"
         ) else { return }
         NSWorkspace.shared.open(url)
+    }
+
+    static func revealCurrentApplication() {
+        NSWorkspace.shared.activateFileViewerSelecting([Bundle.main.bundleURL])
     }
 
     static func resetInputMonitoring() -> Bool {

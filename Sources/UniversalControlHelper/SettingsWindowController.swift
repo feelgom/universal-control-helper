@@ -399,7 +399,7 @@ private struct SettingsView: View {
                     .accessibilityLabel("입력 모니터링 설정 열기")
                 }
 
-                Text("스위치가 켜져 있는데도 미허용이면 권한 항목을 재등록해 주세요.")
+                Text("스위치가 켜져 있는데도 미허용이면 권한 항목을 재등록하세요. 목록에 앱이 자동으로 나타나지 않으면 +를 눌러 이 앱을 직접 추가해야 합니다.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
@@ -407,6 +407,11 @@ private struct SettingsView: View {
                     if !model.inputMonitoringReady {
                         Button("권한 항목 재등록…", role: .destructive) {
                             model.resetInputMonitoring()
+                        }
+                        .controlSize(.small)
+
+                        Button("앱 위치 보기") {
+                            AppPermissions.revealCurrentApplication()
                         }
                         .controlSize(.small)
                     }
