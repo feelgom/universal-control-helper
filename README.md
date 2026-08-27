@@ -5,9 +5,9 @@
 <h1 align="center">Universal Control Helper</h1>
 
 <p align="center">
-  <strong>Universal Control의 키보드 입력 문제를 바로잡습니다.</strong>
+  <strong>Universal Control에서 막히는 Caps Lock 한/영 전환을 되살립니다.</strong>
   <br />
-  <sub>키보드 하나, Mac 두 대, 익숙한 전환 방식 그대로.</sub>
+  <sub>커서를 다른 Mac으로 옮겨도, 손은 익숙한 전환 방식을 그대로 기억합니다.</sub>
 </p>
 
 <p align="center">
@@ -19,6 +19,7 @@
 </p>
 
 <p align="center">
+  <a href="#왜-필요한가요">왜 필요한가요?</a> ·
   <a href="#빠른-시작">빠른 시작</a> ·
   <a href="#사용법">사용법</a> ·
   <a href="#어떻게-동작하나요">작동 방식</a> ·
@@ -28,10 +29,37 @@
 
 ---
 
-macOS Universal Control로 다른 Mac을 조작할 때 Caps Lock을 눌러도 한/영 전환이 되지 않는 경우가 있습니다. Universal Control Helper는 Source Mac의 물리 Caps Lock을 감지해 Target으로 전달하고, `ABC ↔ 두벌식` 상태도 함께 맞춥니다. Caps Lock 이외의 일반 키 입력은 처리하지 않습니다.
+## 왜 필요한가요?
+
+Universal Control은 키보드와 트랙패드 하나로 Mac 두 대를 자연스럽게 오갈 수 있게 해 줍니다. 하지만 한국어 사용자가 당연하게 쓰던 **Caps Lock 한/영 전환은 다른 Mac에서 작동하지 않을 때가 있습니다.**
+
+커서를 다른 Mac으로 옮긴 뒤 평소처럼 Caps Lock을 누르면:
+
+1. 한/영이 바뀌지 않은 채 입력이 시작됩니다.
+2. 잘못 입력한 글자를 지웁니다.
+3. 입력 메뉴를 클릭하거나 별도의 단축키를 찾아 다시 전환합니다.
+4. 문서, 메신저, 터미널을 오갈 때마다 같은 흐름이 반복됩니다.
+
+> **커서는 자연스럽게 넘어갔는데, 익숙한 입력 방식은 따라오지 않는 것.**  
+> Universal Control Helper는 바로 이 작은 듯 큰 불편을 해결합니다.
+
+### 설치하면 이렇게 달라집니다
+
+| 기존의 불편 | Universal Control Helper 사용 후 |
+| --- | --- |
+| 다른 Mac에서 Caps Lock을 눌러도 한/영이 바뀌지 않음 | 어느 Mac에서든 평소처럼 **Caps Lock 한 번** |
+| 입력 언어가 달라 오타를 낸 뒤 다시 작성 | 두 Mac의 **ABC ↔ 두벌식 상태를 자동 동기화** |
+| 입력 메뉴를 클릭하거나 다른 단축키를 기억해야 함 | 커서가 어디에 있든 **같은 근육 기억을 유지** |
+
+Universal Control Helper는 키보드가 연결된 Mac의 **물리 Caps Lock**을 감지해 조작 중인 Mac으로 전달합니다. 입력 메뉴나 다른 단축키로 바꾼 ABC ↔ 두벌식 상태도 함께 맞춰 줍니다.
+
+- 일반 키 입력은 처리하지 않습니다.
+- 입력한 텍스트, 클립보드, 마우스 이벤트를 수집하거나 전송하지 않습니다.
+- 메뉴 막대에서 조용히 실행되며, 필요할 때 언제든 기능을 끌 수 있습니다.
+
+**Mac 두 대를 Universal Control로 연결하고 Caps Lock으로 한/영을 전환한다면, 이 앱은 끊어진 입력 경험의 마지막 한 조각을 이어 줍니다.**
 
 > Apple과 제휴하거나 Apple이 보증한 제품이 아닌 비공식 오픈 소스 유틸리티입니다.
-
 
 ## 빠른 시작
 
