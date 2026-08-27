@@ -46,6 +46,7 @@ jobs:
             release-feed
           cp release-feed/UniInputFix-macOS-universal.zip dist/UniInputFix-macOS-universal.zip
           cp release-feed/appcast.xml dist/appcast.xml
+          cp scripts/install.sh dist/install.sh
           cd dist
           shasum -a 256 UniInputFix-macOS-universal.zip > SHA256SUMS
 
@@ -60,5 +61,6 @@ jobs:
             dist/UniInputFix-macOS-universal.zip \
             dist/appcast.xml \
             dist/SHA256SUMS \
+            dist/install.sh \
             --title "UniInput Fix ${GITHUB_REF_NAME#v}" \
             --notes-file RELEASE_NOTES.md

@@ -29,6 +29,6 @@
 - arm64/x86_64 Universal Binary 빌드
 - Sparkle 프레임워크 임베드와 코드 서명
 - EdDSA 서명된 `appcast.xml` 생성
-- ZIP, 체크섬, 앱캐스트를 GitHub Release에 업로드
+- ZIP, 체크섬, 앱캐스트와 `install.sh`를 GitHub Release에 업로드
 
 앱의 업데이트 URL은 항상 최신 GitHub Release의 `appcast.xml`을 가리킵니다.

@@ -1,63 +1,140 @@
-# UniInput Fix
+<p align="center">
+  <img src=".github/assets/hero.svg" alt="UniInput Fix — Universal Control Caps Lock bridge" width="100%" />
+</p>
 
-[![CI](https://github.com/feelgom/UniInputFix/actions/workflows/ci.yml/badge.svg)](https://github.com/feelgom/UniInputFix/actions/workflows/ci.yml)
-[![Latest Release](https://img.shields.io/github/v/release/feelgom/UniInputFix)](https://github.com/feelgom/UniInputFix/releases/latest)
+<h1 align="center">UniInput Fix</h1>
 
-Universal Control로 다른 Mac을 조작할 때 Caps Lock 한/영 전환이 동작하지 않는 문제를 보정하는 macOS 메뉴 막대 앱입니다.
+<p align="center">
+  <strong>Universal Control에서 사라진 Caps Lock 한/영 전환을 되돌립니다.</strong>
+  <br />
+  <sub>키보드 하나, Mac 두 대, 익숙한 전환 방식 그대로.</sub>
+</p>
 
-> 휠 스크롤 문제는 구형 Logi Options 삭제로 해결되었으므로, 버전 1.1부터 마우스 감시와 스크롤 릴레이 기능을 완전히 제거했습니다.
+<p align="center">
+  <a href="https://github.com/feelgom/UniInputFix/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/feelgom/UniInputFix/ci.yml?branch=main&style=flat-square&label=build"></a>
+  <a href="https://github.com/feelgom/UniInputFix/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/feelgom/UniInputFix?style=flat-square&color=5b7cfa"></a>
+  <a href="https://github.com/feelgom/UniInputFix/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/feelgom/UniInputFix?style=flat-square&color=f5c542"></a>
+  <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-31c48d?style=flat-square"></a>
+  <img alt="macOS 13+" src="https://img.shields.io/badge/macOS-13%2B-111827?style=flat-square&logo=apple">
+</p>
 
-## 주요 기능
+<p align="center">
+  <a href="#빠른-시작">빠른 시작</a> ·
+  <a href="#사용법">사용법</a> ·
+  <a href="#어떻게-동작하나요">작동 방식</a> ·
+  <a href="#업데이트">업데이트</a> ·
+  <a href="#개발">개발</a>
+</p>
 
-- Source Mac에서 물리 키보드의 Caps Lock 누름만 감지
-- Bonjour를 이용한 Target Mac 자동 검색
-- 6자리 페어링 코드가 일치하는 Mac만 명령 처리
-- Target Mac의 현재 입력 소스를 확인해 `ABC ↔ 두벌식` 직접 전환
-- Sparkle을 통한 새 버전 자동 확인과 안전한 인앱 업데이트
+---
 
-일반 키 입력, 입력한 텍스트, 마우스 이벤트는 읽거나 전송하지 않습니다. 외부 서버도 사용하지 않습니다.
+macOS Universal Control로 다른 Mac을 조작할 때 Caps Lock을 눌러도 한/영 전환이 되지 않는 경우가 있습니다. UniInput Fix는 **물리 키보드의 Caps Lock 누름만** Source Mac에서 감지하고, 로컬 네트워크를 통해 Target Mac의 `ABC ↔ 두벌식` 입력 소스를 전환합니다.
 
-## 요구 사항
+> [!NOTE]
+> 휠 스크롤 문제는 구형 Logi Options 삭제로 해결되었으므로, 버전 1.1부터 마우스 감시와 스크롤 릴레이 기능은 포함하지 않습니다.
+
+## 빠른 시작
+
+### 설치 스크립트 — 권장
+
+다음 명령은 최신 GitHub Release를 내려받고, 게시된 SHA-256 체크섬과 앱 서명을 확인한 뒤 `/Applications`에 설치합니다. 기존 설치본은 삭제하지 않고 사용자 Library의 백업 폴더로 이동합니다.
+
+```bash
+curl -fsSL https://github.com/feelgom/UniInputFix/releases/latest/download/install.sh | bash
+```
+
+실행 전에 스크립트를 확인하려면:
+
+```bash
+curl -fsSL https://github.com/feelgom/UniInputFix/releases/latest/download/install.sh -o /tmp/uniinputfix-install.sh
+less /tmp/uniinputfix-install.sh
+bash /tmp/uniinputfix-install.sh
+```
+
+앱을 자동 실행하지 않거나 다른 폴더에 설치할 수도 있습니다.
+
+```bash
+bash /tmp/uniinputfix-install.sh --no-launch
+bash /tmp/uniinputfix-install.sh --install-dir "$HOME/Applications"
+```
+
+### 직접 설치
+
+[최신 Release](https://github.com/feelgom/UniInputFix/releases/latest)에서 `UniInputFix-macOS-universal.zip`을 받아 압축을 풀고 `UniInputFix.app`을 `/Applications`로 옮깁니다.
+
+> [!IMPORTANT]
+> 현재 공개 빌드는 Apple Developer ID 서명·공증 없이 배포됩니다. 첫 실행 시 Finder에서 앱을 Control-클릭한 뒤 **열기**를 선택해야 할 수 있습니다.
+
+## 사용법
+
+두 Mac에 앱을 설치한 다음 역할과 페어링 코드만 맞추면 됩니다.
+
+| Mac | 역할 | 필요한 권한 | 할 일 |
+| --- | --- | --- | --- |
+| 키보드가 연결된 Mac | **키보드 Mac (Source)** | 접근성, 입력 모니터링 | Caps Lock 보정 켜기 |
+| 조작할 다른 Mac | **대상 Mac (Target)** | 없음 | Target 역할 선택 |
+
+1. 두 Mac을 같은 로컬 네트워크에 연결하고 Universal Control을 활성화합니다.
+2. 두 앱의 **페어링 코드**를 같은 6자리 숫자로 맞춥니다.
+3. Universal Control 포인터가 Target Mac에 있을 때 Source에서 **Caps Lock 보정 켜기**를 선택합니다.
+4. Source Mac으로 돌아오면 보정을 끕니다.
+
+빠른 토글 단축키는 `Control-Option-Command-U`입니다.
+
+## 어떻게 동작하나요?
+
+```text
+물리 Caps Lock
+      │
+      ▼
+Source Mac ── Bonjour / 같은 LAN ──▶ Target Mac
+  입력 감지       6자리 코드 확인       ABC ↔ 두벌식
+```
+
+- Source는 물리 키보드의 Caps Lock 누름만 감지합니다.
+- Bonjour로 Target을 자동 검색하고, 코드가 일치한 연결만 처리합니다.
+- Target은 현재 입력 소스를 확인한 뒤 macOS API로 ABC와 두벌식을 직접 전환합니다.
+- 일반 키 입력, 입력한 텍스트, 클립보드, 마우스 이벤트는 수집하거나 전송하지 않습니다.
+
+### 현재 범위
 
 - macOS 13 이상
-- 같은 로컬 네트워크에 연결된 두 Mac
-- 두 Mac 사이에 정상적으로 설정된 Universal Control
+- `ABC ↔ 두벌식` 조합
+- 신뢰할 수 있는 동일 로컬 네트워크
+- 보정 모드는 사용자가 직접 켜고 끔
 
-## 설치 및 사용
-
-1. [최신 Release](https://github.com/feelgom/UniInputFix/releases/latest)에서 `UniInputFix-macOS-universal.zip`을 받습니다.
-2. 압축을 풀어 `UniInputFix.app`을 두 Mac의 `/Applications`로 복사합니다.
-3. 키보드가 연결된 Mac에서는 **키보드 Mac (Source)**로 둡니다.
-4. 조작할 다른 Mac에서는 **대상 Mac (Target)**을 선택합니다.
-5. 두 Mac의 `페어링 코드`를 같은 6자리 숫자로 맞춥니다.
-6. Source Mac에서는 **시스템 설정 → 개인정보 보호 및 보안**에서 앱의 **접근성**과 **입력 모니터링**을 허용합니다. Target Mac에는 해당 권한이 필요하지 않습니다.
-7. Universal Control 포인터가 Target Mac에 있을 때 Source 메뉴의 **Caps Lock 보정 켜기**를 선택합니다. 단축키는 `Control-Option-Command-U`입니다.
-8. Source Mac으로 돌아오면 같은 단축키로 보정을 끕니다.
-
-개인 개발자 서명 없이 배포된 빌드는 첫 실행 시 Finder에서 앱을 Control-클릭한 뒤 **열기**를 선택해야 할 수 있습니다.
+페어링 코드는 같은 네트워크의 다른 앱을 구분하는 용도이며 네트워크 암호화를 제공하지 않습니다. 공용·비신뢰 네트워크에서는 사용하지 마세요.
 
 ## 업데이트
 
-앱은 Sparkle을 통해 GitHub Release의 서명된 업데이트 피드를 확인합니다. 메뉴의 **업데이트 확인…**으로 즉시 확인할 수 있으며, 기본적으로 새 버전을 주기적으로 확인합니다.
+앱은 [Sparkle](https://sparkle-project.org/)로 GitHub Release의 EdDSA 서명 업데이트를 확인합니다. 메뉴 막대에서 **업데이트 확인…**을 선택하거나 기본 주기 확인을 이용할 수 있습니다.
 
-현재 공개 빌드는 Apple Developer ID 서명·공증 없이 배포됩니다. Sparkle 업데이트 파일은 EdDSA 서명으로 검증되지만, macOS가 앱 버전 교체 후 Source Mac의 접근성 또는 입력 모니터링 권한을 다시 허용하도록 요청할 수 있습니다.
+Developer ID가 없는 현재 빌드는 버전 교체 후 Source Mac의 접근성 또는 입력 모니터링 권한을 다시 요청할 수 있습니다.
 
 ## 개발
 
-```sh
-swift test
-./scripts/build-app.sh
+```bash
+swift test -Xswiftc -warnings-as-errors
+BUILD_UNIVERSAL=1 ./scripts/build-app.sh
+REQUIRE_UNIVERSAL=1 ./scripts/verify-release.sh
 ```
 
-태그(`v1.2.0` 등)를 푸시하면 GitHub Actions가 테스트, Universal Binary 빌드, Sparkle 서명, 앱캐스트 생성, GitHub Release 업로드를 수행합니다. 자세한 절차는 [RELEASING.md](RELEASING.md)를 참고하세요.
+`v*` 태그를 푸시하면 GitHub Actions가 테스트, Universal Binary 빌드, Sparkle 서명, 앱캐스트 생성과 Release 업로드를 수행합니다. 자세한 절차는 [RELEASING.md](RELEASING.md)를 참고하세요.
 
-## 보안 및 개인정보
+## Star History
 
-- 네트워크로 전송되는 사용자 동작은 `입력 소스 전환` 명령뿐입니다.
-- 입력한 문자와 클립보드는 수집하거나 전송하지 않습니다.
-- 업데이트 ZIP은 Sparkle EdDSA 서명으로 검증됩니다.
-- 취약점 신고 방법은 [SECURITY.md](SECURITY.md)를 참고하세요.
+<p align="center">
+  <a href="https://www.star-history.com/#feelgom/UniInputFix&type=date">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=feelgom/UniInputFix&type=date&theme=dark" />
+      <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=feelgom/UniInputFix&type=date" />
+      <img alt="UniInput Fix Star History" src="https://api.star-history.com/svg?repos=feelgom/UniInputFix&type=date" width="760" />
+    </picture>
+  </a>
+</p>
 
-## 라이선스
+## 보안 및 기여
 
-[MIT License](LICENSE)
+- 보안 문제는 공개 Issue 대신 [보안 정책](SECURITY.md)에 안내된 비공개 신고 기능을 이용해 주세요.
+- 버그 제보와 개선 제안은 [GitHub Issues](https://github.com/feelgom/UniInputFix/issues)에서 받습니다.
+- 코드는 [MIT License](LICENSE)로 배포됩니다.
