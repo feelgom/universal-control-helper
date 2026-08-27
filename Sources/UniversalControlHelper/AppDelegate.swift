@@ -167,10 +167,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let menu = NSMenu()
 
         let header = NSMenuItem()
-        let headerView = StatusMenuHeaderView(
-            isEnabled: preferences.helperEnabled,
-            status: displayedConnectionStatus
-        )
+        let headerView = StatusMenuHeaderView(isEnabled: preferences.helperEnabled)
         headerView.enabledDidChange = { [weak self] enabled in
             self?.setHelperEnabled(enabled)
         }
@@ -371,7 +368,7 @@ private final class StatusMenuHeaderView: NSView {
 
     private let enabledSwitch = PersistentTintSwitch()
 
-    init(isEnabled: Bool, status: String) {
+    init(isEnabled: Bool) {
         super.init(frame: NSRect(x: 0, y: 0, width: 310, height: 64))
 
         let iconView = NSImageView(image: NSApp.applicationIconImage)
@@ -381,16 +378,7 @@ private final class StatusMenuHeaderView: NSView {
         let title = NSTextField(labelWithString: "Universal Control Helper")
         title.font = .systemFont(ofSize: 14, weight: .semibold)
 
-        let subtitle = NSTextField(labelWithString: status)
-        subtitle.font = .systemFont(ofSize: 11)
-        subtitle.textColor = .secondaryLabelColor
-        subtitle.lineBreakMode = .byTruncatingTail
-
-        let labels = NSStackView(views: [title, subtitle])
-        labels.orientation = .vertical
-        labels.alignment = .leading
-        labels.spacing = 2
-        labels.translatesAutoresizingMaskIntoConstraints = false
+        title.translatesAutoresizingMaskIntoConstraints = false
 
         enabledSwitch.isOn = isEnabled
         enabledSwitch.target = self
@@ -399,7 +387,7 @@ private final class StatusMenuHeaderView: NSView {
         enabledSwitch.translatesAutoresizingMaskIntoConstraints = false
 
         addSubview(iconView)
-        addSubview(labels)
+        addSubview(title)
         addSubview(enabledSwitch)
 
         NSLayoutConstraint.activate([
@@ -407,9 +395,9 @@ private final class StatusMenuHeaderView: NSView {
             iconView.centerYAnchor.constraint(equalTo: centerYAnchor),
             iconView.widthAnchor.constraint(equalToConstant: 38),
             iconView.heightAnchor.constraint(equalToConstant: 38),
-            labels.leadingAnchor.constraint(equalTo: iconView.trailingAnchor, constant: 10),
-            labels.centerYAnchor.constraint(equalTo: centerYAnchor),
-            labels.trailingAnchor.constraint(lessThanOrEqualTo: enabledSwitch.leadingAnchor, constant: -10),
+            title.leadingAnchor.constraint(equalTo: iconView.trailingAnchor, constant: 10),
+            title.centerYAnchor.constraint(equalTo: centerYAnchor),
+            title.trailingAnchor.constraint(lessThanOrEqualTo: enabledSwitch.leadingAnchor, constant: -10),
             enabledSwitch.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -14),
             enabledSwitch.centerYAnchor.constraint(equalTo: centerYAnchor),
         ])
