@@ -32,8 +32,6 @@ macOS Universal Control로 다른 Mac을 조작할 때 Caps Lock을 눌러도 �
 
 > Apple과 제휴하거나 Apple이 보증한 제품이 아닌 비공식 오픈 소스 유틸리티입니다.
 
-> [!NOTE]
-> 휠 스크롤 문제는 구형 Logi Options 삭제로 해결되었으므로, 버전 1.1부터 마우스 감시와 스크롤 릴레이 기능은 포함하지 않습니다.
 
 ## 빠른 시작
 
