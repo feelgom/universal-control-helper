@@ -1,5 +1,6 @@
 import XCTest
 @testable import UniversalControlHelper
+import UniversalControlCore
 
 @MainActor
 final class SettingsViewModelTests: XCTestCase {
@@ -108,6 +109,23 @@ final class SettingsViewModelTests: XCTestCase {
         XCTAssertEqual(model.launchAtLoginFeedback, "승인 필요")
     }
 
+    func testSelectingInputSourcesInvokesCallbackWithUpdatedPair() {
+        let model = SettingsViewModel()
+        model.update(snapshot: snapshot(pairingCode: "123456"))
+        var reportedPairs: [InputSourcePair] = []
+        model.inputSourcePairDidChange = { reportedPairs.append($0) }
+
+        model.selectPrimaryInputSource("com.apple.keylayout.US")
+        model.selectSecondaryInputSource("com.apple.inputmethod.Japanese.FullWidthRoman")
+
+        XCTAssertEqual(model.primaryInputSourceID, "com.apple.keylayout.US")
+        XCTAssertEqual(model.secondaryInputSourceID, "com.apple.inputmethod.Japanese.FullWidthRoman")
+        XCTAssertEqual(reportedPairs.count, 2)
+        XCTAssertEqual(reportedPairs[0].primaryID, "com.apple.keylayout.US")
+        XCTAssertEqual(reportedPairs[0].secondaryID, InputSourcePair.defaultPair.secondaryID)
+        XCTAssertEqual(reportedPairs[1].secondaryID, "com.apple.inputmethod.Japanese.FullWidthRoman")
+    }
+
     private func snapshot(
         pairingCode: String,
         status: String = "대상 Mac 검색 중"
@@ -120,7 +138,12 @@ final class SettingsViewModelTests: XCTestCase {
             helperEnabled: true,
             currentVersion: "1.5.3",
             canCheckForUpdates: true,
-            launchAtLoginState: .disabled
+            launchAtLoginState: .disabled,
+            availableInputSources: [
+                InputSourceDescriptor(id: "com.apple.keylayout.ABC", name: "ABC"),
+                InputSourceDescriptor(id: "com.apple.inputmethod.Korean.2SetKorean", name: "두벌식"),
+            ],
+            inputSourcePair: .defaultPair
         )
     }
 }

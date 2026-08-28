@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUI
+import UniversalControlCore
 
 struct SettingsSnapshot {
     let role: ComputerRole
@@ -10,6 +11,8 @@ struct SettingsSnapshot {
     let currentVersion: String
     let canCheckForUpdates: Bool
     let launchAtLoginState: LaunchAtLoginState
+    let availableInputSources: [InputSourceDescriptor]
+    let inputSourcePair: InputSourcePair
 }
 
 final class SettingsViewModel: ObservableObject {
@@ -27,6 +30,9 @@ final class SettingsViewModel: ObservableObject {
     @Published var pairingCodeFeedback: String?
     @Published var pairingCodeIsValid = true
     private var pairingCodeIsDirty = false
+    @Published private(set) var availableInputSources: [InputSourceDescriptor] = []
+    @Published private(set) var primaryInputSourceID = InputSourcePair.defaultPair.primaryID
+    @Published private(set) var secondaryInputSourceID = InputSourcePair.defaultPair.secondaryID
 
     var roleDidChange: ((ComputerRole) -> Void)?
     var pairingCodeDidChange: ((String) -> Bool)?
@@ -36,6 +42,7 @@ final class SettingsViewModel: ObservableObject {
     var helperEnabledDidChange: ((Bool) -> Void)?
     var updateCheckRequested: (() -> Void)?
     var launchAtLoginDidChange: ((Bool) -> LaunchAtLoginChangeResult)?
+    var inputSourcePairDidChange: ((InputSourcePair) -> Void)?
 
     func update(snapshot: SettingsSnapshot) {
         role = snapshot.role
@@ -49,6 +56,19 @@ final class SettingsViewModel: ObservableObject {
         currentVersion = snapshot.currentVersion
         canCheckForUpdates = snapshot.canCheckForUpdates
         applyLaunchAtLoginState(snapshot.launchAtLoginState)
+        availableInputSources = snapshot.availableInputSources
+        primaryInputSourceID = snapshot.inputSourcePair.primaryID
+        secondaryInputSourceID = snapshot.inputSourcePair.secondaryID
+    }
+
+    func selectPrimaryInputSource(_ id: String) {
+        primaryInputSourceID = id
+        inputSourcePairDidChange?(InputSourcePair(primaryID: id, secondaryID: secondaryInputSourceID))
+    }
+
+    func selectSecondaryInputSource(_ id: String) {
+        secondaryInputSourceID = id
+        inputSourcePairDidChange?(InputSourcePair(primaryID: primaryInputSourceID, secondaryID: id))
     }
 
     func selectRole(_ newRole: ComputerRole) {
@@ -134,6 +154,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     var helperEnabledDidChange: ((Bool) -> Void)?
     var updateCheckRequested: (() -> Void)?
     var launchAtLoginDidChange: ((Bool) -> LaunchAtLoginChangeResult)?
+    var inputSourcePairDidChange: ((InputSourcePair) -> Void)?
     var windowDidClose: (() -> Void)?
 
     private let model = SettingsViewModel()
@@ -144,8 +165,8 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         let window = NSWindow(contentViewController: hostingController)
         window.title = "Universal Control Helper 설정"
         window.styleMask = [.titled, .closable, .miniaturizable]
-        window.setContentSize(NSSize(width: 600, height: 720))
-        window.minSize = NSSize(width: 560, height: 660)
+        window.setContentSize(NSSize(width: 600, height: 870))
+        window.minSize = NSSize(width: 560, height: 810)
         window.isReleasedWhenClosed = false
         window.center()
 
@@ -177,6 +198,9 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
             self?.launchAtLoginDidChange?(enabled)
                 ?? LaunchAtLoginChangeResult(state: .unavailable, message: nil)
         }
+        model.inputSourcePairDidChange = { [weak self] pair in
+            self?.inputSourcePairDidChange?(pair)
+        }
     }
 
     @available(*, unavailable)
@@ -201,8 +225,8 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     }
 
     private func resize(for role: ComputerRole) {
-        let height: CGFloat = role == .source ? 720 : 590
-        window?.minSize = NSSize(width: 560, height: role == .source ? 660 : 550)
+        let height: CGFloat = role == .source ? 870 : 740
+        window?.minSize = NSSize(width: 560, height: role == .source ? 810 : 690)
         window?.setContentSize(NSSize(width: 600, height: height))
     }
 }
@@ -214,6 +238,7 @@ private struct SettingsView: View {
         VStack(alignment: .leading, spacing: 18) {
             header
             generalSection
+            inputSourceSection
             connectionSection
             if model.role == .source {
                 inputPermissionSection
@@ -225,8 +250,8 @@ private struct SettingsView: View {
         .frame(
             minWidth: 560,
             idealWidth: 600,
-            minHeight: model.role == .source ? 660 : 550,
-            idealHeight: model.role == .source ? 720 : 590
+            minHeight: model.role == .source ? 810 : 690,
+            idealHeight: model.role == .source ? 870 : 740
         )
     }
 
@@ -244,6 +269,41 @@ private struct SettingsView: View {
                 Text("두 Mac의 한/영 입력 소스를 자동으로 맞춥니다.")
                     .foregroundStyle(.secondary)
             }
+        }
+    }
+
+    private var inputSourceSection: some View {
+        GroupBox("전환할 입력 소스") {
+            VStack(alignment: .leading, spacing: 14) {
+                Picker(
+                    "입력 소스 A",
+                    selection: Binding(
+                        get: { model.primaryInputSourceID },
+                        set: { model.selectPrimaryInputSource($0) }
+                    )
+                ) {
+                    ForEach(model.availableInputSources, id: \.id) { source in
+                        Text(source.name).tag(source.id)
+                    }
+                }
+
+                Picker(
+                    "입력 소스 B",
+                    selection: Binding(
+                        get: { model.secondaryInputSourceID },
+                        set: { model.selectSecondaryInputSource($0) }
+                    )
+                ) {
+                    ForEach(model.availableInputSources, id: \.id) { source in
+                        Text(source.name).tag(source.id)
+                    }
+                }
+
+                Text("Caps Lock을 누르면 이 두 입력 소스를 번갈아 전환합니다. 두 Mac에 같은 두 입력 소스가 설치되어 있어야 합니다.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            .padding(8)
         }
     }
 

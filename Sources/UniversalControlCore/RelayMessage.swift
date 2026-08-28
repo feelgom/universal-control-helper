@@ -48,7 +48,10 @@ public struct RelayMessage: Codable, Equatable, Sendable {
 }
 
 public enum RelayProtocol {
-    public static let currentVersion = 2
+    /// v3 sends the raw input source id in `setInputSource` (any configured
+    /// pair), not just the old abc/korean tag. Peers below this version can't
+    /// decode that, so they're kept on the legacy toggle-relay path instead.
+    public static let currentVersion = 3
 
     public static func supportsExplicitInputSourceState(_ peerProtocolVersion: Int) -> Bool {
         peerProtocolVersion >= currentVersion

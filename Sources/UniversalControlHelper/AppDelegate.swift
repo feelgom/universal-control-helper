@@ -94,7 +94,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         case .target:
             let server = TargetServer { [weak self] in self?.preferences.pairingCode ?? "" }
-            server.messageReceived = { message in TargetInputInjector.handle(message) }
+            server.messageReceived = { [weak self] message in
+                TargetInputInjector.handle(message, pair: self?.preferences.inputSourcePair ?? .defaultPair)
+            }
             server.statusDidChange = { [weak self] status in
                 self?.connectionStatus = status
                 self?.refreshInterface()
@@ -125,7 +127,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             helperEnabled: preferences.helperEnabled,
             currentVersion: displayedVersion,
             canCheckForUpdates: updaterController.updater.canCheckForUpdates,
-            launchAtLoginState: LaunchAtLogin.state
+            launchAtLoginState: LaunchAtLogin.state,
+            availableInputSources: InputSourceController.availableInputSources(),
+            inputSourcePair: preferences.inputSourcePair
         )
     }
 
@@ -270,6 +274,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self?.setHelperEnabled(enabled)
         }
         controller.updateCheckRequested = { [weak self] in self?.checkForUpdates() }
+        controller.inputSourcePairDidChange = { [weak self] pair in
+            self?.preferences.inputSourcePair = pair
+        }
         controller.launchAtLoginDidChange = { [weak self] enabled in
             let result = LaunchAtLogin.setEnabled(enabled)
             self?.refreshInterface()

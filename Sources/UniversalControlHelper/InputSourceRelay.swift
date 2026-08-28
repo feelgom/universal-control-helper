@@ -171,10 +171,10 @@ private func inputSourceChangedCallback(
 }
 
 enum TargetInputInjector {
-    static func handle(_ message: RelayMessage) {
+    static func handle(_ message: RelayMessage, pair: InputSourcePair) {
         switch message.kind {
         case .toggleInputSource:
-            InputSourceController.toggleKoreanAndABC()
+            InputSourceController.toggle(using: pair)
         case .setInputSource:
             guard let inputSource = message.inputSource else { return }
             InputSourceController.select(inputSource)
@@ -189,38 +189,23 @@ enum InputSourceController {
         guard let current = TISCopyCurrentKeyboardInputSource()?.takeRetainedValue() else {
             return nil
         }
-        return InputSourceSelection.state(
-            id: identifier(of: current),
-            name: localizedName(of: current)
-        )
+        return identifier(of: current)
     }
 
     static func select(_ state: InputSourceState) {
         if currentState == state { return }
-        guard let target = inputSource(for: state) else { return }
+        guard let target = inputSources().first(where: { identifier(of: $0) == state }) else { return }
         TISSelectInputSource(target)
     }
 
-    static func toggleKoreanAndABC() {
-        guard let current = TISCopyCurrentKeyboardInputSource()?.takeRetainedValue() else { return }
-        let candidates = inputSources()
-        let descriptors = candidates.map(descriptor)
-        guard let targetID = InputSourceSelection.targetID(
-            currentID: identifier(of: current),
-            candidates: descriptors
-        ), let target = candidates.first(where: { identifier(of: $0) == targetID }) else {
-            return
-        }
+    static func toggle(using pair: InputSourcePair) {
+        let targetID = InputSourceSelection.toggleTargetID(currentID: currentState, pair: pair)
+        guard let target = inputSources().first(where: { identifier(of: $0) == targetID }) else { return }
         TISSelectInputSource(target)
     }
 
-    private static func inputSource(for state: InputSourceState) -> TISInputSource? {
-        let candidates = inputSources()
-        let descriptors = candidates.map(descriptor)
-        guard let targetID = InputSourceSelection.targetID(for: state, candidates: descriptors) else {
-            return nil
-        }
-        return candidates.first { identifier(of: $0) == targetID }
+    static func availableInputSources() -> [InputSourceDescriptor] {
+        inputSources().map(descriptor)
     }
 
     private static func inputSources() -> [TISInputSource] {

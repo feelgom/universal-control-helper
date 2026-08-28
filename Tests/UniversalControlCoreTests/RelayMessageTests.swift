@@ -10,13 +10,13 @@ final class RelayMessageTests: XCTestCase {
     }
 
     func testRoundTripInputSourceStateMessage() throws {
-        let original = RelayMessage.setInputSource(.korean, token: "123456")
+        let original = RelayMessage.setInputSource("com.apple.inputmethod.Korean.2SetKorean", token: "123456")
         let encoded = try RelayCodec.encodeLine(original)
         let decoded = try RelayCodec.decode(encoded.dropLast())
 
         XCTAssertEqual(decoded, original)
-        XCTAssertEqual(decoded.protocolVersion, 2)
-        XCTAssertEqual(decoded.inputSource, .korean)
+        XCTAssertEqual(decoded.protocolVersion, RelayProtocol.currentVersion)
+        XCTAssertEqual(decoded.inputSource, "com.apple.inputmethod.Korean.2SetKorean")
     }
 
     func testHandshakeRemainsDecodableByLegacyPeer() throws {
@@ -34,7 +34,8 @@ final class RelayMessageTests: XCTestCase {
 
     func testLegacyPeerDoesNotReceiveDuplicateStateSynchronization() {
         XCTAssertFalse(RelayProtocol.supportsExplicitInputSourceState(1))
-        XCTAssertTrue(RelayProtocol.supportsExplicitInputSourceState(2))
+        XCTAssertFalse(RelayProtocol.supportsExplicitInputSourceState(2))
+        XCTAssertTrue(RelayProtocol.supportsExplicitInputSourceState(RelayProtocol.currentVersion))
     }
 
     func testFramerHandlesSplitAndCombinedPackets() throws {
@@ -67,37 +68,47 @@ final class RelayMessageTests: XCTestCase {
         XCTAssertEqual(PairingCode.generate().count, 6)
     }
 
-    func testInputSourceSelectionTogglesKoreanAndABC() {
-        let sources = [
-            InputSourceDescriptor(id: "com.apple.keylayout.ABC", name: "ABC"),
-            InputSourceDescriptor(id: "com.apple.inputmethod.Korean.2SetKorean", name: "두벌식"),
-        ]
+    func testInputSourceSelectionTogglesDefaultPair() {
         XCTAssertEqual(
-            InputSourceSelection.targetID(currentID: "com.apple.inputmethod.Korean.2SetKorean", candidates: sources),
+            InputSourceSelection.toggleTargetID(
+                currentID: "com.apple.inputmethod.Korean.2SetKorean",
+                pair: .defaultPair
+            ),
             "com.apple.keylayout.ABC"
         )
         XCTAssertEqual(
-            InputSourceSelection.targetID(currentID: "com.apple.keylayout.ABC", candidates: sources),
+            InputSourceSelection.toggleTargetID(currentID: "com.apple.keylayout.ABC", pair: .defaultPair),
             "com.apple.inputmethod.Korean.2SetKorean"
         )
     }
 
-    func testInputSourceSelectionClassifiesAndSelectsExplicitState() {
+    func testInputSourceSelectionTogglesArbitraryConfiguredPair() {
+        let pair = InputSourcePair(
+            primaryID: "com.apple.keylayout.US",
+            secondaryID: "com.apple.inputmethod.Japanese.FullWidthRoman"
+        )
+        XCTAssertEqual(
+            InputSourceSelection.toggleTargetID(currentID: "com.apple.keylayout.US", pair: pair),
+            "com.apple.inputmethod.Japanese.FullWidthRoman"
+        )
+        XCTAssertEqual(
+            InputSourceSelection.toggleTargetID(currentID: "com.apple.inputmethod.Japanese.FullWidthRoman", pair: pair),
+            "com.apple.keylayout.US"
+        )
+        // Unknown/nil current state falls back to the primary source.
+        XCTAssertEqual(InputSourceSelection.toggleTargetID(currentID: nil, pair: pair), pair.primaryID)
+        XCTAssertEqual(
+            InputSourceSelection.toggleTargetID(currentID: "com.apple.CharacterPaletteIM", pair: pair),
+            pair.primaryID
+        )
+    }
+
+    func testInputSourceSelectionResolvesByExactID() {
         let sources = [
             InputSourceDescriptor(id: "com.apple.keylayout.ABC", name: "ABC"),
             InputSourceDescriptor(id: "com.apple.inputmethod.Korean.2SetKorean", name: "두벌식"),
         ]
-
-        XCTAssertEqual(InputSourceSelection.state(id: sources[0].id, name: sources[0].name), .abc)
-        XCTAssertEqual(InputSourceSelection.state(id: sources[1].id, name: sources[1].name), .korean)
-        XCTAssertNil(InputSourceSelection.state(id: "com.apple.CharacterPaletteIM", name: "이모티콘"))
-        XCTAssertEqual(
-            InputSourceSelection.targetID(for: .abc, candidates: sources),
-            "com.apple.keylayout.ABC"
-        )
-        XCTAssertEqual(
-            InputSourceSelection.targetID(for: .korean, candidates: sources),
-            "com.apple.inputmethod.Korean.2SetKorean"
-        )
+        XCTAssertEqual(InputSourceSelection.resolve(id: "com.apple.keylayout.ABC", candidates: sources), sources[0])
+        XCTAssertNil(InputSourceSelection.resolve(id: "com.apple.CharacterPaletteIM", candidates: sources))
     }
 }
