@@ -10,56 +10,35 @@ public struct InputSourceDescriptor: Equatable, Sendable {
     }
 }
 
-public enum InputSourceState: String, Codable, Equatable, Sendable {
-    case abc
-    case korean
+/// A macOS input source identifier (for example `com.apple.keylayout.ABC`),
+/// sent over the relay as-is so Target can select the exact source Source is on.
+public typealias InputSourceState = String
+
+/// Two input sources Caps Lock toggles between. Defaults to the original
+/// ABC ↔ 두벌식 pair so existing installs keep working unconfigured.
+public struct InputSourcePair: Equatable, Sendable {
+    public let primaryID: String
+    public let secondaryID: String
+
+    public init(primaryID: String, secondaryID: String) {
+        self.primaryID = primaryID
+        self.secondaryID = secondaryID
+    }
+
+    public static let defaultPair = InputSourcePair(
+        primaryID: "com.apple.keylayout.ABC",
+        secondaryID: "com.apple.inputmethod.Korean.2SetKorean"
+    )
 }
 
 public enum InputSourceSelection {
-    public static func state(
-        id: String,
-        name: String = ""
-    ) -> InputSourceState? {
-        let normalizedID = id.lowercased()
-        let normalizedName = name.lowercased()
-        if normalizedID.contains("korean")
-            || normalizedID.contains("hangul")
-            || normalizedID.contains("2set")
-            || normalizedName.contains("두벌식") {
-            return .korean
-        }
-        if id == "com.apple.keylayout.ABC"
-            || name.caseInsensitiveCompare("ABC") == .orderedSame {
-            return .abc
-        }
-        return nil
+    /// The other source in `pair` relative to `currentID`. Falls back to
+    /// `primaryID` when the current source isn't part of the configured pair.
+    public static func toggleTargetID(currentID: String?, pair: InputSourcePair) -> String {
+        currentID == pair.primaryID ? pair.secondaryID : pair.primaryID
     }
 
-    public static func targetID(
-        for state: InputSourceState,
-        candidates: [InputSourceDescriptor]
-    ) -> String? {
-        switch state {
-        case .abc:
-            return candidates.first { $0.id == "com.apple.keylayout.ABC" }?.id
-                ?? candidates.first { $0.name.caseInsensitiveCompare("ABC") == .orderedSame }?.id
-        case .korean:
-            return candidates.first {
-                let id = $0.id.lowercased()
-                return id.contains("2setkorean") || id.contains("2sethangul")
-            }?.id ?? candidates.first {
-                let id = $0.id.lowercased()
-                return id.contains("korean") || id.contains("hangul")
-            }?.id
-        }
-    }
-
-    public static func targetID(
-        currentID: String,
-        candidates: [InputSourceDescriptor]
-    ) -> String? {
-        let currentState = state(id: currentID)
-        let targetState: InputSourceState = currentState == .korean ? .abc : .korean
-        return targetID(for: targetState, candidates: candidates)
+    public static func resolve(id: String, candidates: [InputSourceDescriptor]) -> InputSourceDescriptor? {
+        candidates.first { $0.id == id }
     }
 }

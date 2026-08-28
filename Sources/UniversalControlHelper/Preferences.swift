@@ -11,6 +11,8 @@ final class Preferences {
         static let role = "computerRole"
         static let pairingCode = "pairingCode"
         static let helperEnabled = "helperEnabled"
+        static let primaryInputSourceID = "primaryInputSourceID"
+        static let secondaryInputSourceID = "secondaryInputSourceID"
     }
 
     private let defaults: UserDefaults
@@ -45,5 +47,20 @@ final class Preferences {
     var helperEnabled: Bool {
         get { defaults.bool(forKey: Key.helperEnabled) }
         set { defaults.set(newValue, forKey: Key.helperEnabled) }
+    }
+
+    var inputSourcePair: InputSourcePair {
+        get {
+            InputSourcePair(
+                primaryID: defaults.string(forKey: Key.primaryInputSourceID)
+                    ?? InputSourcePair.defaultPair.primaryID,
+                secondaryID: defaults.string(forKey: Key.secondaryInputSourceID)
+                    ?? InputSourcePair.defaultPair.secondaryID
+            )
+        }
+        set {
+            defaults.set(newValue.primaryID, forKey: Key.primaryInputSourceID)
+            defaults.set(newValue.secondaryID, forKey: Key.secondaryInputSourceID)
+        }
     }
 }
